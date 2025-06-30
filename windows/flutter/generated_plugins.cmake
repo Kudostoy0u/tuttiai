@@ -4,7 +4,9 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
+  metronome
   permission_handler_windows
+  record_windows
   url_launcher_windows
 )
 

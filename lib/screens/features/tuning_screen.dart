@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
+import 'package:flutter/services.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:record/record.dart';
+import 'package:pitch_detector_dart/pitch_detector.dart';
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:typed_data';
 
 class TuningScreen extends StatefulWidget {
   const TuningScreen({super.key});
@@ -10,203 +15,372 @@ class TuningScreen extends StatefulWidget {
 }
 
 class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMixin {
+  // Audio players for reference tones
+  final AudioPlayer _referencePlayer = AudioPlayer();
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  late PitchDetector _pitchDetector;
+  
+  // Animation controllers
+  late AnimationController _tuningAnimationController;
+  late AnimationController _pulseController;
+  
+  // State variables
   bool _isListening = false;
   bool _isPlayingReference = false;
-  String _currentNote = 'A4';
-  double _frequency = 440.0;
+  double _currentPitch = 0.0;
+  double _targetPitch = 0.0;
+  String _selectedInstrument = 'Violin';
+  String _selectedNote = '';
   double _cents = 0.0;
-  String _selectedInstrument = 'Guitar';
-  double _confidence = 0.0;
-  Timer? _tuningTimer;
   
-  late AnimationController _pulseController;
-  late AnimationController _needleController;
-  late AnimationController _confidenceController;
-
-  final List<String> _instruments = ['Guitar', 'Piano', 'Violin', 'Ukulele', 'Bass', 'Cello'];
+  // Pitch detection
+  StreamSubscription<Uint8List>? _recordSub;
+  Timer? _pitchUpdateTimer;
+  DateTime _lastPitchUpdate = DateTime.now();
   
-  final Map<String, List<Map<String, dynamic>>> _instrumentNotes = {
-    'Guitar': [
-      {'note': 'E2', 'frequency': 82.41, 'string': '6th'},
-      {'note': 'A2', 'frequency': 110.00, 'string': '5th'},
-      {'note': 'D3', 'frequency': 146.83, 'string': '4th'},
-      {'note': 'G3', 'frequency': 196.00, 'string': '3rd'},
-      {'note': 'B3', 'frequency': 246.94, 'string': '2nd'},
-      {'note': 'E4', 'frequency': 329.63, 'string': '1st'},
-    ],
-    'Piano': [
-      {'note': 'C4', 'frequency': 261.63, 'string': 'Middle C'},
-      {'note': 'D4', 'frequency': 293.66, 'string': 'D'},
-      {'note': 'E4', 'frequency': 329.63, 'string': 'E'},
-      {'note': 'F4', 'frequency': 349.23, 'string': 'F'},
-      {'note': 'G4', 'frequency': 392.00, 'string': 'G'},
-      {'note': 'A4', 'frequency': 440.00, 'string': 'A'},
-      {'note': 'B4', 'frequency': 493.88, 'string': 'B'},
-    ],
+  // Instrument definitions with their tuning notes
+  final Map<String, List<Map<String, dynamic>>> _instruments = {
     'Violin': [
-      {'note': 'G3', 'frequency': 196.00, 'string': 'G'},
-      {'note': 'D4', 'frequency': 293.66, 'string': 'D'},
-      {'note': 'A4', 'frequency': 440.00, 'string': 'A'},
       {'note': 'E5', 'frequency': 659.25, 'string': 'E'},
+      {'note': 'A4', 'frequency': 440.00, 'string': 'A'},
+      {'note': 'D4', 'frequency': 293.66, 'string': 'D'},
+      {'note': 'G3', 'frequency': 196.00, 'string': 'G'},
     ],
-    'Ukulele': [
-      {'note': 'G4', 'frequency': 392.00, 'string': '4th'},
-      {'note': 'C4', 'frequency': 261.63, 'string': '3rd'},
-      {'note': 'E4', 'frequency': 329.63, 'string': '2nd'},
-      {'note': 'A4', 'frequency': 440.00, 'string': '1st'},
-    ],
-    'Bass': [
-      {'note': 'E1', 'frequency': 41.20, 'string': '4th'},
-      {'note': 'A1', 'frequency': 55.00, 'string': '3rd'},
-      {'note': 'D2', 'frequency': 73.42, 'string': '2nd'},
-      {'note': 'G2', 'frequency': 98.00, 'string': '1st'},
+    'Viola': [
+      {'note': 'A4', 'frequency': 440.00, 'string': 'A'},
+      {'note': 'D4', 'frequency': 293.66, 'string': 'D'},
+      {'note': 'G3', 'frequency': 196.00, 'string': 'G'},
+      {'note': 'C3', 'frequency': 130.81, 'string': 'C'},
     ],
     'Cello': [
-      {'note': 'C2', 'frequency': 65.41, 'string': 'C'},
-      {'note': 'G2', 'frequency': 98.00, 'string': 'G'},
-      {'note': 'D3', 'frequency': 146.83, 'string': 'D'},
       {'note': 'A3', 'frequency': 220.00, 'string': 'A'},
+      {'note': 'D3', 'frequency': 146.83, 'string': 'D'},
+      {'note': 'G2', 'frequency': 98.00, 'string': 'G'},
+      {'note': 'C2', 'frequency': 65.41, 'string': 'C'},
+    ],
+    'Double Bass': [
+      {'note': 'G2', 'frequency': 98.00, 'string': 'G'},
+      {'note': 'D2', 'frequency': 73.42, 'string': 'D'},
+      {'note': 'A1', 'frequency': 55.00, 'string': 'A'},
+      {'note': 'E1', 'frequency': 41.20, 'string': 'E'},
+    ],
+    'Guitar': [
+      {'note': 'E4', 'frequency': 329.63, 'string': 'E'},
+      {'note': 'B3', 'frequency': 246.94, 'string': 'B'},
+      {'note': 'G3', 'frequency': 196.00, 'string': 'G'},
+      {'note': 'D3', 'frequency': 146.83, 'string': 'D'},
+      {'note': 'A2', 'frequency': 110.00, 'string': 'A'},
+      {'note': 'E2', 'frequency': 82.41, 'string': 'E'},
+    ],
+    'Flute': [
+      {'note': 'A4', 'frequency': 440.00, 'string': 'Concert A'},
+      {'note': 'Bb4', 'frequency': 466.16, 'string': 'B♭'},
+    ],
+    'Oboe': [
+      {'note': 'A4', 'frequency': 440.00, 'string': 'Concert A'},
+      {'note': 'Bb4', 'frequency': 466.16, 'string': 'B♭'},
+    ],
+    'Clarinet': [
+      {'note': 'A4', 'frequency': 440.00, 'string': 'Concert A'},
+      {'note': 'Bb4', 'frequency': 466.16, 'string': 'B♭'},
+    ],
+    'Trumpet': [
+      {'note': 'A4', 'frequency': 440.00, 'string': 'Concert A'},
+      {'note': 'Bb4', 'frequency': 466.16, 'string': 'B♭'},
+      {'note': 'C5', 'frequency': 523.25, 'string': 'C'},
+    ],
+    'French Horn': [
+      {'note': 'A4', 'frequency': 440.00, 'string': 'Concert A'},
+      {'note': 'F4', 'frequency': 349.23, 'string': 'F'},
+      {'note': 'Bb3', 'frequency': 233.08, 'string': 'B♭'},
+    ],
+    'Trombone': [
+      {'note': 'A4', 'frequency': 440.00, 'string': 'Concert A'},
+      {'note': 'Bb3', 'frequency': 233.08, 'string': 'B♭'},
+      {'note': 'F3', 'frequency': 174.61, 'string': 'F'},
     ],
   };
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+    
+    _tuningAnimationController = AnimationController(
       vsync: this,
-    );
-    _needleController = AnimationController(
       duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _confidenceController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
     );
     
-    // Initialize with first note of selected instrument
-    if (_instrumentNotes[_selectedInstrument]!.isNotEmpty) {
-      final firstNote = _instrumentNotes[_selectedInstrument]!.first;
-      _currentNote = firstNote['note'];
-      _frequency = firstNote['frequency'];
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    
+    // Select first note of default instrument
+    final firstNote = _instruments[_selectedInstrument]!.first;
+    _selectedNote = firstNote['note'];
+    _targetPitch = firstNote['frequency'];
+    
+    // Initialize pitch detector with optimal settings
+    _pitchDetector = PitchDetector(
+      audioSampleRate: 44100,
+      bufferSize: 2048,
+    );
+    
+    // Check permissions on init
+    _checkPermissions();
+  }
+
+  Future<void> _checkPermissions() async {
+    try {
+      final hasPermission = await _audioRecorder.hasPermission();
+      if (!hasPermission) {
+        debugPrint('Microphone permission not granted');
+      }
+    } catch (e) {
+      debugPrint('Error checking permissions: $e');
     }
   }
 
   @override
   void dispose() {
-    _tuningTimer?.cancel();
+    _tuningAnimationController.dispose();
     _pulseController.dispose();
-    _needleController.dispose();
-    _confidenceController.dispose();
+    _referencePlayer.dispose();
+    _recordSub?.cancel();
+    _stopListening();
     super.dispose();
   }
 
-  void _toggleListening() {
-    setState(() {
-      _isListening = !_isListening;
-    });
-    
+  Future<void> _toggleListening() async {
     if (_isListening) {
-      _pulseController.repeat();
-      _startTuning();
+      await _stopListening();
     } else {
-      _stopTuning();
+      await _startListening();
     }
   }
 
-  void _startTuning() {
-    _tuningTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (_isListening) {
-        _simulateFrequencyDetection();
+  Future<void> _startListening() async {
+    try {
+      // Request permission if needed
+      if (!await _audioRecorder.hasPermission()) {
+        _showError('Microphone permission is required for tuning');
+        return;
       }
-    });
+
+      // Check if encoder is supported
+      if (!await _audioRecorder.isEncoderSupported(AudioEncoder.pcm16bits)) {
+        _showError('PCM recording is not supported on this device');
+        return;
+      }
+
+      // Start streaming audio data
+      final stream = await _audioRecorder.startStream(
+        const RecordConfig(
+          encoder: AudioEncoder.pcm16bits,
+          sampleRate: 44100,
+          numChannels: 1,
+        ),
+      );
+
+      setState(() {
+        _isListening = true;
+      });
+
+      // Process audio data with pitch detection
+      _recordSub = stream.listen(
+        (data) {
+          _processPitch(data);
+        },
+        onError: (error) {
+          debugPrint('Audio stream error: $error');
+          _stopListening();
+        },
+      );
+
+      // Start animation
+      _tuningAnimationController.repeat();
+    } catch (e) {
+      debugPrint('Error starting recording: $e');
+      _showError('Failed to start tuning: ${e.toString()}');
+      setState(() {
+        _isListening = false;
+      });
+    }
   }
 
-  void _stopTuning() {
-    _tuningTimer?.cancel();
-    _pulseController.stop();
-    _pulseController.reset();
+  Future<void> _stopListening() async {
+    try {
+      await _audioRecorder.stop();
+      _recordSub?.cancel();
+      _pitchUpdateTimer?.cancel();
+      
+      if (mounted) {
+        setState(() {
+          _isListening = false;
+          _currentPitch = 0.0;
+          _cents = 0.0;
+        });
+      }
+      
+      _tuningAnimationController.stop();
+      _tuningAnimationController.reset();
+    } catch (e) {
+      debugPrint('Error stopping recording: $e');
+    }
+  }
+
+  void _processPitch(Uint8List audioData) async {
+    if (audioData.isEmpty) return;
+    
+    // Debounce pitch updates to avoid overwhelming the UI
+    final now = DateTime.now();
+    if (now.difference(_lastPitchUpdate).inMilliseconds < 100) return;
+    _lastPitchUpdate = now;
+    
+    try {
+      // The pitch detector expects the raw PCM16 data directly
+      if (audioData.length < 4000) return; // Need enough samples for analysis (2000 int16 samples = 4000 bytes)
+      
+      // Use pitch detector to analyze the audio
+      final result = await _pitchDetector.getPitchFromIntBuffer(audioData);
+      
+      if (result.pitched && result.pitch > 50 && result.pitch < 2000) {
+        if (mounted) {
+          setState(() {
+            _currentPitch = result.pitch;
+            _cents = _calculateCents(_currentPitch, _targetPitch);
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error in pitch processing: $e');
+    }
+  }
+
+  double _calculateCents(double frequency, double targetFrequency) {
+    if (frequency <= 0 || targetFrequency <= 0) return 0;
+    return 1200 * (math.log(frequency / targetFrequency) / math.log(2));
+  }
+
+  Future<void> _playReferenceTone() async {
+    if (_isPlayingReference) {
+      await _referencePlayer.stop();
+      setState(() {
+        _isPlayingReference = false;
+      });
+      return;
+    }
+
     setState(() {
-      _confidence = 0.0;
+      _isPlayingReference = true;
     });
-    _confidenceController.reset();
+
+    try {
+      // Generate a sine wave for the reference tone
+      final sampleRate = 44100;
+      final duration = 3; // seconds
+      final samples = sampleRate * duration;
+      final waveData = List<int>.generate(samples, (i) {
+        final sample = math.sin(2 * math.pi * _targetPitch * i / sampleRate);
+        // Convert to 16-bit PCM with lower volume
+        return (sample * 16383).toInt(); // Half volume to avoid clipping
+      });
+      
+      // Convert to bytes
+      final bytes = Uint8List(waveData.length * 2);
+      final byteData = bytes.buffer.asByteData();
+      for (int i = 0; i < waveData.length; i++) {
+        byteData.setInt16(i * 2, waveData[i], Endian.little);
+      }
+      
+      // Create WAV file in memory
+      final wavBytes = _createWavFile(bytes, sampleRate);
+      
+      // Play the generated audio
+      await _referencePlayer.setAudioSource(
+        WaveAudioSource(wavBytes),
+      );
+      await _referencePlayer.play();
+      
+      // Wait for playback to complete
+      await _referencePlayer.playerStateStream.firstWhere(
+        (state) => state.processingState == ProcessingState.completed,
+      );
+      
+    } catch (e) {
+      debugPrint('Error playing reference tone: $e');
+      _showError('Failed to play reference tone');
+    } finally {
+      setState(() {
+        _isPlayingReference = false;
+      });
+    }
   }
 
-  void _simulateFrequencyDetection() {
-    // Get target frequency for current note
-    final targetNote = _instrumentNotes[_selectedInstrument]!
-        .firstWhere((note) => note['note'] == _currentNote);
-    final targetFrequency = targetNote['frequency'] as double;
+  Uint8List _createWavFile(Uint8List pcmData, int sampleRate) {
+    final dataSize = pcmData.length;
+    final fileSize = dataSize + 36; // 44 - 8
     
-    // Simulate frequency detection with some variation
-    final variation = (math.Random().nextDouble() - 0.5) * 30; // ±15 Hz variation
-    final detectedFrequency = targetFrequency + variation;
+    final wav = Uint8List(44 + dataSize);
+    final byteData = wav.buffer.asByteData();
     
-    // Calculate cents difference
-    final cents = 1200 * math.log(detectedFrequency / targetFrequency) / math.ln2;
+    // RIFF header
+    wav.setRange(0, 4, 'RIFF'.codeUnits);
+    byteData.setUint32(4, fileSize, Endian.little);
+    wav.setRange(8, 12, 'WAVE'.codeUnits);
     
-    // Simulate confidence based on how close we are to target
-    final maxConfidence = 1.0 - (cents.abs() / 50).clamp(0.0, 1.0);
-    final confidence = maxConfidence * (0.7 + math.Random().nextDouble() * 0.3);
+    // fmt chunk
+    wav.setRange(12, 16, 'fmt '.codeUnits);
+    byteData.setUint32(16, 16, Endian.little); // chunk size
+    byteData.setUint16(20, 1, Endian.little); // PCM format
+    byteData.setUint16(22, 1, Endian.little); // channels
+    byteData.setUint32(24, sampleRate, Endian.little);
+    byteData.setUint32(28, sampleRate * 2, Endian.little); // byte rate
+    byteData.setUint16(32, 2, Endian.little); // block align
+    byteData.setUint16(34, 16, Endian.little); // bits per sample
     
-    setState(() {
-      _frequency = detectedFrequency;
-      _cents = cents;
-      _confidence = confidence;
-    });
+    // data chunk
+    wav.setRange(36, 40, 'data'.codeUnits);
+    byteData.setUint32(40, dataSize, Endian.little);
+    wav.setRange(44, 44 + dataSize, pcmData);
     
-    // Animate needle
-    _needleController.animateTo(
-      (cents.clamp(-50, 50) + 50) / 100,
-      duration: const Duration(milliseconds: 200),
-    );
-    
-    // Animate confidence
-    _confidenceController.animateTo(confidence);
+    return wav;
   }
 
-  void _playReferenceNote() async {
-    if (_isPlayingReference) return;
+  void _showError(String message) {
+    if (!mounted) return;
     
-    setState(() => _isPlayingReference = true);
-    
-    // Show visual feedback
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.volume_up, color: Colors.white),
-            const SizedBox(width: 8),
-            Text('Playing $_currentNote reference tone'),
-          ],
-        ),
-        backgroundColor: const Color(0xFF6366F1),
-        duration: const Duration(seconds: 2),
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
       ),
     );
-    
-    // Simulate playing reference note for 2 seconds
-    await Future.delayed(const Duration(seconds: 2));
-    
-    if (mounted) {
-      setState(() => _isPlayingReference = false);
+  }
+
+  Color _getTuningColor() {
+    final absCents = _cents.abs();
+    if (absCents <= 5) {
+      return const Color(0xFF10B981); // Green - in tune
+    } else if (absCents <= 10) {
+      return const Color(0xFFF59E0B); // Yellow - close
+    } else {
+      return const Color(0xFFEF4444); // Red - out of tune
     }
   }
 
-  void _selectNote(String note) {
-    final noteData = _instrumentNotes[_selectedInstrument]!
-        .firstWhere((n) => n['note'] == note);
+  String _getTuningText() {
+    if (_currentPitch == 0) return 'Start Tuning';
     
-    setState(() {
-      _currentNote = note;
-      _frequency = noteData['frequency'];
-      _cents = 0.0;
-      _confidence = 0.0;
-    });
-    
-    _needleController.reset();
-    _confidenceController.reset();
+    final absCents = _cents.abs();
+    if (absCents <= 5) {
+      return 'In Tune!';
+    } else if (_cents > 0) {
+      return 'Too High';
+    } else {
+      return 'Too Low';
+    }
   }
 
   @override
@@ -214,7 +388,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Tuning',
+          'Tuner',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
@@ -225,281 +399,115 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isPlayingReference ? Icons.volume_up : Icons.volume_off,
-              color: _isPlayingReference ? const Color(0xFF6366F1) : Colors.white,
-            ),
-            onPressed: _playReferenceNote,
-            tooltip: 'Play reference note',
-          ),
-        ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Instrument selector
+            // Instrument Selector
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.music_note, color: Color(0xFF6366F1)),
-                    const SizedBox(width: 12),
                     const Text(
-                      'Instrument:',
+                      'Select Instrument',
                       style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                         color: Colors.white,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const Spacer(),
-                    DropdownButton<String>(
-                      value: _selectedInstrument,
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            _selectedInstrument = newValue;
-                            // Reset to first note of new instrument
-                            final firstNote = _instrumentNotes[newValue]!.first;
-                            _currentNote = firstNote['note'];
-                            _frequency = firstNote['frequency'];
-                            _cents = 0.0;
-                            _confidence = 0.0;
-                          });
-                          _needleController.reset();
-                          _confidenceController.reset();
-                        }
-                      },
-                      dropdownColor: const Color(0xFF1E1E3F),
-                      style: const TextStyle(color: Colors.white),
-                      items: _instruments.map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white30),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButton<String>(
+                        value: _selectedInstrument,
+                        isExpanded: true,
+                        dropdownColor: const Color(0xFF1E1E3F),
+                        style: const TextStyle(color: Colors.white),
+                        underline: const SizedBox(),
+                        items: _instruments.keys.map((instrument) {
+                          return DropdownMenuItem(
+                            value: instrument,
+                            child: Text(instrument),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedInstrument = value;
+                              final firstNote = _instruments[value]!.first;
+                              _selectedNote = firstNote['note'];
+                              _targetPitch = firstNote['frequency'];
+                            });
+                          }
+                        },
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             
-            // Tuning display
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Current note display with confidence indicator
-                    Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Confidence ring
-                        AnimatedBuilder(
-                          animation: _confidenceController,
-                          builder: (context, child) {
-                            return Container(
-                              width: 220,
-                              height: 220,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0xFF6366F1).withOpacity(0.3),
-                                  width: 2,
-                                ),
-                              ),
-                              child: CircularProgressIndicator(
-                                value: _confidenceController.value,
-                                strokeWidth: 8,
-                                backgroundColor: Colors.transparent,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  _getTuningColor().withOpacity(0.8),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        // Main note circle
-                        AnimatedBuilder(
-                          animation: _pulseController,
-                          builder: (context, child) {
-                            return Container(
-                              width: 200,
-                              height: 200,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _getTuningColor().withOpacity(0.1),
-                                border: Border.all(
-                                  color: _isListening 
-                                      ? Color.lerp(
-                                          _getTuningColor(),
-                                          _getTuningColor().withOpacity(0.3),
-                                          _pulseController.value,
-                                        )!
-                                      : _getTuningColor().withOpacity(0.3),
-                                  width: 3,
-                                ),
-                              ),
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      _currentNote,
-                                      style: const TextStyle(
-                                        fontSize: 48,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${_frequency.toStringAsFixed(1)} Hz',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white70,
-                                      ),
-                                    ),
-                                    if (_isListening) ...[
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Confidence: ${(_confidence * 100).toStringAsFixed(0)}%',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: _getTuningColor(),
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-                    
-                    // Enhanced tuning meter
-                    SizedBox(
-                      width: 320,
-                      height: 120,
-                      child: CustomPaint(
-                        painter: EnhancedTuningMeterPainter(
-                          cents: _cents,
-                          needleAnimation: _needleController,
-                          isListening: _isListening,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Cents value and status
-                    Column(
-                      children: [
-                        Text(
-                          '${_cents.toStringAsFixed(1)} cents',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: _getTuningColor(),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: _getTuningColor().withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            _getTuningStatus(),
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: _getTuningColor(),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
-            // String/Note selector
+            // Note Selection
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '$_selectedInstrument Strings',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text(
-                          'Target: ${_instrumentNotes[_selectedInstrument]!.firstWhere((n) => n['note'] == _currentNote)['frequency'].toStringAsFixed(1)} Hz',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      _instruments[_selectedInstrument]!.any((n) => n['string'].length > 1) 
+                          ? 'Select Note' 
+                          : 'Select String',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _instrumentNotes[_selectedInstrument]!.map((noteData) {
-                        final note = noteData['note'] as String;
-                        final string = noteData['string'] as String;
-                        final isSelected = note == _currentNote;
-                        return GestureDetector(
-                          onTap: () => _selectNote(note),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFF6366F1)
-                                  : Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  note,
-                                  style: TextStyle(
-                                    color: isSelected ? Colors.white : Colors.white70,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    fontSize: 14,
-                                  ),
+                      children: _instruments[_selectedInstrument]!.map((noteData) {
+                        final isSelected = _selectedNote == noteData['note'];
+                        return ChoiceChip(
+                          label: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                noteData['string'],
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Colors.white70,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                Text(
-                                  string,
-                                  style: TextStyle(
-                                    color: isSelected ? Colors.white70 : Colors.white60,
-                                    fontSize: 10,
-                                  ),
+                              ),
+                              Text(
+                                noteData['note'],
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white70 : Colors.white54,
+                                  fontSize: 12,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedNote = noteData['note'];
+                              _targetPitch = noteData['frequency'];
+                            });
+                          },
+                          selectedColor: const Color(0xFF6366F1),
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
                         );
                       }).toList(),
                     ),
@@ -507,249 +515,359 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             
-            // Control buttons
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _playReferenceNote,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD97706),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(_isPlayingReference ? Icons.volume_up : Icons.play_arrow),
-                        const SizedBox(width: 8),
-                        Text(
-                          _isPlayingReference ? 'Playing...' : 'Reference',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+            // Tuning Display
+            Card(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    // Visual Tuner
+                    SizedBox(
+                      width: 200,
+                      height: 200,
+                      child: CustomPaint(
+                        painter: TuningMeterPainter(
+                          cents: _cents,
+                          isActive: _isListening,
+                          color: _getTuningColor(),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    onPressed: _toggleListening,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _isListening ? Colors.red : const Color(0xFF6366F1),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              AnimatedBuilder(
+                                animation: _pulseController,
+                                builder: (context, child) {
+                                  return Transform.scale(
+                                    scale: _isListening ? 1.0 + _pulseController.value * 0.1 : 1.0,
+                                    child: Icon(
+                                      _isListening ? Icons.graphic_eq : Icons.mic_off,
+                                      size: 48,
+                                      color: _isListening ? _getTuningColor() : Colors.white30,
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _currentPitch > 0 ? '${_currentPitch.toStringAsFixed(1)} Hz' : '-- Hz',
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                _getTuningText(),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: _getTuningColor(),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (_cents.abs() > 5 && _currentPitch > 0)
+                                Text(
+                                  '${_cents > 0 ? '+' : ''}${_cents.toStringAsFixed(0)} cents',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    const SizedBox(height: 24),
+                    
+                    // Control Buttons - Fixed overflow with flexible layout
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Use column layout for narrow screens
+                        if (constraints.maxWidth < 320) {
+                          return Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _playReferenceTone,
+                                  icon: Icon(
+                                    _isPlayingReference ? Icons.stop : Icons.play_arrow,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  label: Text(
+                                    _isPlayingReference ? 'Stop' : 'Reference',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF6366F1),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _toggleListening,
+                                  icon: Icon(
+                                    _isListening ? Icons.mic : Icons.mic_none,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  label: Text(
+                                    _isListening ? 'Stop' : 'Start',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _isListening 
+                                        ? const Color(0xFFEF4444) 
+                                        : const Color(0xFF10B981),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        
+                        // Use row layout for wider screens with flexible spacing
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _playReferenceTone,
+                                icon: Icon(
+                                  _isPlayingReference ? Icons.stop : Icons.play_arrow,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                label: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    _isPlayingReference ? 'Stop' : 'Reference',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF6366F1),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _toggleListening,
+                                icon: Icon(
+                                  _isListening ? Icons.mic : Icons.mic_none,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                label: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    _isListening ? 'Stop' : 'Start',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _isListening 
+                                      ? const Color(0xFFEF4444) 
+                                      : const Color(0xFF10B981),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Target Frequency Info
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(_isListening ? Icons.stop : Icons.mic, size: 24),
-                        const SizedBox(width: 8),
+                        const Text(
+                          'Target Note',
+                          style: TextStyle(
+                            color: Colors.white54,
+                            fontSize: 14,
+                          ),
+                        ),
                         Text(
-                          _isListening ? 'Stop Listening' : 'Start Tuning',
+                          _selectedNote,
                           style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text(
+                          'Target Frequency',
+                          style: TextStyle(
+                            color: Colors.white54,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          '${_targetPitch.toStringAsFixed(2)} Hz',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ],
         ),
       ),
     );
   }
-
-  Color _getTuningColor() {
-    if (_cents.abs() < 5) return const Color(0xFF059669); // Green - in tune
-    if (_cents.abs() < 15) return const Color(0xFFD97706); // Orange - close
-    return const Color(0xFFDC2626); // Red - out of tune
-  }
-
-  String _getTuningStatus() {
-    if (_cents.abs() < 5) return 'In Tune ♪';
-    if (_cents.abs() < 15) {
-      return _cents > 0 ? 'Slightly Sharp ↑' : 'Slightly Flat ↓';
-    }
-    return _cents > 0 ? 'Too Sharp ↑↑' : 'Too Flat ↓↓';
-  }
 }
 
-class EnhancedTuningMeterPainter extends CustomPainter {
+// Custom painter for the tuning meter
+class TuningMeterPainter extends CustomPainter {
   final double cents;
-  final Animation<double> needleAnimation;
-  final bool isListening;
+  final bool isActive;
+  final Color color;
 
-  EnhancedTuningMeterPainter({
+  TuningMeterPainter({
     required this.cents,
-    required this.needleAnimation,
-    required this.isListening,
-  }) : super(repaint: needleAnimation);
+    required this.isActive,
+    required this.color,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 30;
-
-    // Draw meter background
+    final radius = size.width / 2 - 20;
+    
+    // Draw arc background
     final backgroundPaint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
+      ..color = Colors.white.withValues(alpha: 0.1)
+      ..strokeWidth = 8
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 12;
-
+      ..strokeCap = StrokeCap.round;
+    
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
-      -math.pi * 0.75,
+      math.pi * 0.75,
       math.pi * 1.5,
       false,
       backgroundPaint,
     );
-
-    // Draw colored sections
-    final sectionPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 10;
-
-    // Red sections (very out of tune)
-    sectionPaint.color = const Color(0xFFDC2626);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi * 0.75,
-      math.pi * 0.3,
-      false,
-      sectionPaint,
-    );
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      math.pi * 0.45,
-      math.pi * 0.3,
-      false,
-      sectionPaint,
-    );
-
-    // Orange sections (close)
-    sectionPaint.color = const Color(0xFFD97706);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi * 0.45,
-      math.pi * 0.25,
-      false,
-      sectionPaint,
-    );
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      math.pi * 0.2,
-      math.pi * 0.25,
-      false,
-      sectionPaint,
-    );
-
-    // Green section (in tune)
-    sectionPaint.color = const Color(0xFF059669);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi * 0.2,
-      math.pi * 0.4,
-      false,
-      sectionPaint,
-    );
-
-    // Draw tick marks
-    final tickPaint = Paint()
-      ..color = Colors.white
+    
+    // Draw tuning marks
+    final markPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.3)
       ..strokeWidth = 2;
-
+    
     for (int i = -50; i <= 50; i += 10) {
-      final angle = (i / 50) * math.pi * 0.6;
-      final isMainTick = i % 20 == 0;
-      final tickLength = isMainTick ? 15.0 : 8.0;
+      final angle = math.pi * 0.75 + (math.pi * 1.5 * ((i + 50) / 100));
+      final startX = center.dx + (radius - 5) * math.cos(angle);
+      final startY = center.dy + (radius - 5) * math.sin(angle);
+      final endX = center.dx + (radius + 5) * math.cos(angle);
+      final endY = center.dy + (radius + 5) * math.sin(angle);
       
-      final startRadius = radius - 5;
-      final endRadius = radius - 5 - tickLength;
-      
-      final start = Offset(
-        center.dx + math.cos(angle) * startRadius,
-        center.dy + math.sin(angle) * startRadius,
+      canvas.drawLine(
+        Offset(startX, startY),
+        Offset(endX, endY),
+        markPaint,
       );
-      final end = Offset(
-        center.dx + math.cos(angle) * endRadius,
-        center.dy + math.sin(angle) * endRadius,
-      );
-      
-      canvas.drawLine(start, end, tickPaint);
-      
-      // Draw tick labels for main ticks
-      if (isMainTick && i != 0) {
-        final textPainter = TextPainter(
-          text: TextSpan(
-            text: '${i > 0 ? '+' : ''}$i',
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          textDirection: TextDirection.ltr,
-        );
-        textPainter.layout();
-        
-        final textOffset = Offset(
-          center.dx + math.cos(angle) * (endRadius - 15) - textPainter.width / 2,
-          center.dy + math.sin(angle) * (endRadius - 15) - textPainter.height / 2,
-        );
-        
-        textPainter.paint(canvas, textOffset);
-      }
     }
-
-    // Draw center marker
-    final centerPaint = Paint()
+    
+    // Draw center mark
+    final centerMarkPaint = Paint()
       ..color = Colors.white
       ..strokeWidth = 3;
-      
+    
+    final centerAngle = math.pi * 1.5;
+    final centerStartX = center.dx + (radius - 10) * math.cos(centerAngle);
+    final centerStartY = center.dy + (radius - 10) * math.sin(centerAngle);
+    final centerEndX = center.dx + (radius + 10) * math.cos(centerAngle);
+    final centerEndY = center.dy + (radius + 10) * math.sin(centerAngle);
+    
     canvas.drawLine(
-      Offset(center.dx, center.dy + radius - 5),
-      Offset(center.dx, center.dy + radius - 20),
-      centerPaint,
+      Offset(centerStartX, centerStartY),
+      Offset(centerEndX, centerEndY),
+      centerMarkPaint,
     );
-
-    // Draw needle
-    if (isListening) {
-      final needleAngle = (needleAnimation.value - 0.5) * math.pi * 1.2;
-      final needlePaint = Paint()
-        ..color = Colors.white
+    
+    if (isActive) {
+      // Draw indicator
+      final normalizedCents = cents.clamp(-50.0, 50.0);
+      final indicatorAngle = math.pi * 0.75 + (math.pi * 1.5 * ((normalizedCents + 50) / 100));
+      
+      final indicatorPaint = Paint()
+        ..color = color
         ..strokeWidth = 4
         ..strokeCap = StrokeCap.round;
-
-      final needleEnd = Offset(
-        center.dx + math.cos(needleAngle) * (radius - 20),
-        center.dy + math.sin(needleAngle) * (radius - 20),
+      
+      final indicatorEndX = center.dx + radius * 0.7 * math.cos(indicatorAngle);
+      final indicatorEndY = center.dy + radius * 0.7 * math.sin(indicatorAngle);
+      
+      canvas.drawLine(center, Offset(indicatorEndX, indicatorEndY), indicatorPaint);
+      
+      // Draw indicator circle
+      canvas.drawCircle(
+        Offset(indicatorEndX, indicatorEndY),
+        6,
+        Paint()..color = color,
       );
-
-      canvas.drawLine(center, needleEnd, needlePaint);
-
-      // Draw needle center circle
-      final centerCirclePaint = Paint()
-        ..color = const Color(0xFF6366F1)
-        ..style = PaintingStyle.fill;
-
-      canvas.drawCircle(center, 6, centerCirclePaint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-} 
+  bool shouldRepaint(covariant TuningMeterPainter oldDelegate) {
+    return cents != oldDelegate.cents ||
+        isActive != oldDelegate.isActive ||
+        color != oldDelegate.color;
+  }
+}
+
+// Custom audio source for in-memory WAV data
+class WaveAudioSource extends StreamAudioSource {
+  final Uint8List _buffer;
+
+  WaveAudioSource(this._buffer);
+
+  @override
+  Future<StreamAudioResponse> request([int? start, int? end]) async {
+    start ??= 0;
+    end ??= _buffer.length;
+
+    return StreamAudioResponse(
+      sourceLength: _buffer.length,
+      contentLength: end - start,
+      offset: start,
+      stream: Stream.value(_buffer.sublist(start, end)),
+      contentType: 'audio/wav',
+    );
+  }
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 
@@ -22,9 +23,28 @@ class _OnboardingModalState extends State<OnboardingModal> {
   final List<String> _goals = [];
 
   final List<String> _instruments = [
-    'Piano', 'Guitar', 'Violin', 'Cello', 'Flute', 'Clarinet', 
-    'Saxophone', 'Trumpet', 'Drums', 'Voice', 'Other'
+    'Piano', 'Guitar', 'Violin', 'Cello', 'Viola', 'Bass', 'Flute', 'Clarinet', 
+    'Saxophone', 'Trumpet', 'Trombone', 'Oboe', 'Drums', 'Voice', 'Other'
   ];
+
+  // Instrument icons mapping
+  final Map<String, IconData> _instrumentIcons = {
+    'Piano': MdiIcons.piano,
+    'Guitar': MdiIcons.guitarAcoustic,
+    'Violin': MdiIcons.violin,
+    'Cello': MdiIcons.musicClefBass,
+    'Viola': MdiIcons.violin,
+    'Bass': MdiIcons.guitarElectric,
+    'Flute': MdiIcons.musicNoteSixteenth,
+    'Clarinet': MdiIcons.musicNoteSixteenth,
+    'Saxophone': MdiIcons.saxophone,
+    'Trumpet': MdiIcons.trumpet,
+    'Trombone': MdiIcons.trumpet,
+    'Oboe': MdiIcons.musicNoteEighth,
+    'Drums': MdiIcons.music,
+    'Voice': MdiIcons.microphone,
+    'Other': MdiIcons.music,
+  };
 
   final List<String> _skillLevels = [
     'Beginner', 'Intermediate', 'Advanced', 'Professional'
@@ -215,7 +235,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
           child: GridView.builder(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 3,
+              childAspectRatio: 2.6,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
@@ -235,14 +255,25 @@ class _OnboardingModalState extends State<OnboardingModal> {
                       width: 2,
                     ),
                   ),
-                  child: Center(
-                    child: Text(
-                      instrument,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _instrumentIcons[instrument] ?? Icons.music_note,
+                        color: isSelected ? Colors.white : Colors.white70,
+                        size: 24,
                       ),
-                    ),
+                      const SizedBox(height: 4),
+                      Text(
+                        instrument,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -265,38 +296,42 @@ class _OnboardingModalState extends State<OnboardingModal> {
           ),
         ),
         const SizedBox(height: 24),
-        ..._skillLevels.map((level) {
-          final isSelected = _skillLevel == level;
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: GestureDetector(
-              onTap: () => setState(() => _skillLevel = level),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                      color: Colors.white,
+        Expanded(
+          child: ListView(
+            children: _skillLevels.map((level) {
+              final isSelected = _skillLevel == level;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: GestureDetector(
+                  onTap: () => setState(() => _skillLevel = level),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      level,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          level,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          );
-        }),
+              );
+            }).toList(),
+          ),
+        ),
       ],
     );
   }
@@ -376,63 +411,69 @@ class _OnboardingModalState extends State<OnboardingModal> {
           ),
         ),
         const SizedBox(height: 24),
-        ..._frequencies.map((frequency) {
-          final isSelected = _practiceFrequency == frequency;
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: GestureDetector(
-              onTap: () => setState(() => _practiceFrequency = frequency),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      frequency,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
+        Expanded(
+          child: ListView(
+            children: [
+              ..._frequencies.map((frequency) {
+                final isSelected = _practiceFrequency == frequency;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _practiceFrequency = frequency),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            frequency,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
-        const SizedBox(height: 24),
-        GestureDetector(
-          onTap: () => setState(() => _hasTeacher = !_hasTeacher),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _hasTeacher ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  _hasTeacher ? Icons.check_box : Icons.check_box_outline_blank,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'I have a music teacher',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
+                  ),
+                );
+              }).toList(),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () => setState(() => _hasTeacher = !_hasTeacher),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _hasTeacher ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _hasTeacher ? Icons.check_box : Icons.check_box_outline_blank,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'I have a music teacher',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ],
@@ -457,48 +498,48 @@ class _OnboardingModalState extends State<OnboardingModal> {
         ),
         const SizedBox(height: 24),
         Expanded(
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 1,
-              childAspectRatio: 6,
-              mainAxisSpacing: 12,
-            ),
+          child: ListView.builder(
             itemCount: _goalOptions.length,
             itemBuilder: (context, index) {
               final goal = _goalOptions[index];
               final isSelected = _goals.contains(goal);
               
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    if (isSelected) {
-                      _goals.remove(goal);
-                    } else {
-                      _goals.add(goal);
-                    }
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isSelected ? Icons.check_box : Icons.check_box_outline_blank,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        goal,
-                        style: const TextStyle(
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _goals.remove(goal);
+                      } else {
+                        _goals.add(goal);
+                      }
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isSelected ? Icons.check_box : Icons.check_box_outline_blank,
                           color: Colors.white,
-                          fontSize: 16,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            goal,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

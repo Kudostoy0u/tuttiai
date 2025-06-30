@@ -19,6 +19,8 @@ class DashboardScreen extends StatelessWidget {
             pinned: true,
             backgroundColor: const Color(0xFF0F0F23),
             flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+              centerTitle: false,
               title: const Text(
                 'TuttiAI',
                 style: TextStyle(
@@ -37,11 +39,10 @@ class DashboardScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                child: Center(
+                child: SafeArea(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 60), // Account for status bar
                       Container(
                         width: 80,
                         height: 80,
@@ -68,10 +69,14 @@ class DashboardScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
               ),
+              stretchModes: const [
+                StretchMode.zoomBackground,
+              ],
             ),
           ),
           SliverPadding(
@@ -86,7 +91,7 @@ class DashboardScreen extends StatelessWidget {
               delegate: SliverChildListDelegate([
                 _buildFeatureCard(
                   context,
-                  'Sheet Music\nRecommendations',
+                  'Sheet Music\nFinder',
                   Icons.library_music,
                   const Color(0xFF6366F1),
                   'AI-powered sheet music suggestions',

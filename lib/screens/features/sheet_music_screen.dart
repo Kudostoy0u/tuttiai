@@ -62,7 +62,7 @@ class _SheetMusicScreenState extends State<SheetMusicScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Sheet Music Recommendations',
+          'Sheet Music Finder',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.white,
