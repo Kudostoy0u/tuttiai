@@ -1,17 +1,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:convert';
+import '../services/supabase_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   bool _isAuthenticated = false;
   bool _isLoading = true;
   bool _hasCompletedOnboarding = false;
   Map<String, dynamic> _userProfile = {};
+  User? _currentUser;
 
   bool get isAuthenticated => _isAuthenticated;
   bool get isLoading => _isLoading;
   bool get hasCompletedOnboarding => _hasCompletedOnboarding;
   Map<String, dynamic> get userProfile => _userProfile;
+  User? get currentUser => _currentUser;
 
   AuthProvider() {
     _initializeAuth();
@@ -20,21 +24,46 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _initializeAuth() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _isAuthenticated = prefs.getBool('isAuthenticated') ?? false;
-      _hasCompletedOnboarding = prefs.getBool('hasCompletedOnboarding') ?? false;
       
-      // Load user profile if exists
-      final profileData = prefs.getString('userProfile');
-      if (profileData != null) {
-        // _userProfile = jsonDecode(profileData);
+      // Check if user is already signed in with Supabase
+      final session = SupabaseService.client.auth.currentSession;
+      if (session != null) {
+        _currentUser = session.user;
+        _isAuthenticated = true;
+        _hasCompletedOnboarding = prefs.getBool('hasCompletedOnboarding') ?? false;
+        
+        // Load user profile if exists
+        final profileData = prefs.getString('userProfile');
+        if (profileData != null) {
+          _userProfile = jsonDecode(profileData);
+        }
+      } else {
+        _isAuthenticated = false;
+        _hasCompletedOnboarding = false;
       }
       
-      // For MVP - simulate loading time
-      await Future.delayed(const Duration(seconds: 2));
+      // Listen to auth state changes
+      SupabaseService.client.auth.onAuthStateChange.listen((data) {
+        final AuthChangeEvent event = data.event;
+        final Session? session = data.session;
+        
+        if (event == AuthChangeEvent.signedIn && session != null) {
+          _currentUser = session.user;
+          _isAuthenticated = true;
+          notifyListeners();
+        } else if (event == AuthChangeEvent.signedOut) {
+          _currentUser = null;
+          _isAuthenticated = false;
+          _hasCompletedOnboarding = false;
+          _userProfile = {};
+          notifyListeners();
+        }
+      });
       
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      print('Error initializing auth: $e');
       _isLoading = false;
       notifyListeners();
     }
@@ -42,59 +71,68 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> signUp(String email, String password) async {
     try {
-      // Supabase sign up would go here
-      // final response = await Supabase.instance.client.auth.signUp(
-      //   email: email,
-      //   password: password,
-      // );
+      final response = await SupabaseService.client.auth.signUp(
+        email: email,
+        password: password,
+      );
       
-      // For MVP - simulate API call
-      await Future.delayed(const Duration(seconds: 1));
-      
-      _isAuthenticated = true;
-      _hasCompletedOnboarding = false;
-      
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isAuthenticated', true);
-      await prefs.setBool('hasCompletedOnboarding', false);
-      
-      notifyListeners();
-      return true;
-    } catch (e) {
+      if (response.user != null) {
+        _currentUser = response.user;
+        _isAuthenticated = true;
+        _hasCompletedOnboarding = false;
+        
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isAuthenticated', true);
+        await prefs.setBool('hasCompletedOnboarding', false);
+        
+        notifyListeners();
+        return true;
+      }
       return false;
+    } on AuthException catch (e) {
+      print('Auth error: ${e.message}');
+      throw e.message ?? 'Sign up failed';
+    } catch (e) {
+      print('Unexpected error: $e');
+      throw 'An unexpected error occurred';
     }
   }
 
   Future<bool> signIn(String email, String password) async {
     try {
-      // Supabase sign in would go here
-      // final response = await Supabase.instance.client.auth.signInWithPassword(
-      //   email: email,
-      //   password: password,
-      // );
+      final response = await SupabaseService.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
       
-      // For MVP - simulate API call
-      await Future.delayed(const Duration(seconds: 1));
-      
-      _isAuthenticated = true;
-      _hasCompletedOnboarding = true; // Assume returning users completed onboarding
-      
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isAuthenticated', true);
-      await prefs.setBool('hasCompletedOnboarding', true);
-      
-      notifyListeners();
-      return true;
-    } catch (e) {
+      if (response.user != null) {
+        _currentUser = response.user;
+        _isAuthenticated = true;
+        
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isAuthenticated', true);
+        
+        // Check if user has completed onboarding
+        _hasCompletedOnboarding = prefs.getBool('hasCompletedOnboarding') ?? true;
+        
+        notifyListeners();
+        return true;
+      }
       return false;
+    } on AuthException catch (e) {
+      print('Auth error: ${e.message}');
+      throw e.message;
+    } catch (e) {
+      print('Unexpected error: $e');
+      throw 'An unexpected error occurred';
     }
   }
 
   Future<void> signOut() async {
     try {
-      // Supabase sign out would go here
-      // await Supabase.instance.client.auth.signOut();
+      await SupabaseService.client.auth.signOut();
       
+      _currentUser = null;
       _isAuthenticated = false;
       _hasCompletedOnboarding = false;
       _userProfile = {};
@@ -104,7 +142,8 @@ class AuthProvider extends ChangeNotifier {
       
       notifyListeners();
     } catch (e) {
-      // Handle error
+      print('Error signing out: $e');
+      throw 'Failed to sign out';
     }
   }
 
@@ -115,14 +154,18 @@ class AuthProvider extends ChangeNotifier {
       
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('hasCompletedOnboarding', true);
-      // await prefs.setString('userProfile', jsonEncode(profile));
+      await prefs.setString('userProfile', jsonEncode(profile));
       
       // Save to Supabase would go here
-      // await Supabase.instance.client.from('user_profiles').insert(profile);
+      // await SupabaseService.client.from('user_profiles').insert({
+      //   ...profile,
+      //   'user_id': _currentUser?.id,
+      // });
       
       notifyListeners();
     } catch (e) {
-      // Handle error
+      print('Error completing onboarding: $e');
+      throw 'Failed to complete onboarding';
     }
   }
 } 

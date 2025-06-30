@@ -442,7 +442,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '${_selectedInstrument} Strings',
+                          '$_selectedInstrument Strings',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

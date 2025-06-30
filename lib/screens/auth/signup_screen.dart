@@ -40,19 +40,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (success && mounted) {
         Navigator.of(context).pop(); // Go back to main app (will show onboarding)
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Sign up failed. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(e.toString()),
             backgroundColor: Colors.red,
           ),
         );

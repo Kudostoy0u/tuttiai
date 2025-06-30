@@ -5,15 +5,13 @@ import 'providers/auth_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/main/main_layout.dart';
+import 'services/supabase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Supabase (commented out for MVP)
-  // await Supabase.initialize(
-  //   url: 'YOUR_SUPABASE_URL',
-  //   anonKey: 'YOUR_SUPABASE_ANON_KEY',
-  // );
+  // Initialize Supabase
+  await SupabaseService.initialize();
   
   runApp(const TuttiAIApp());
 }

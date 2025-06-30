@@ -38,19 +38,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (success && mounted) {
         // Navigation is handled by the AppWrapper
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid email or password'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(e.toString()),
             backgroundColor: Colors.red,
           ),
         );
