@@ -20,6 +20,10 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
   final AudioRecorder _audioRecorder = AudioRecorder();
   late PitchDetector _pitchDetector;
   
+  // Audio configuration
+  static const int _sampleRate = 44100; // Standard sample rate  
+  static const int _bufferSize = 4000; // Increased buffer size to match common implementations
+  
   // Animation controllers
   late AnimationController _tuningAnimationController;
   late AnimationController _pulseController;
@@ -31,75 +35,111 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
   double _targetPitch = 0.0;
   String _selectedInstrument = 'Violin';
   String _selectedNote = '';
+  String _selectedString = '';
+  int _selectedOctave = 4;
   double _cents = 0.0;
   
   // Pitch detection
   StreamSubscription<Uint8List>? _recordSub;
   Timer? _pitchUpdateTimer;
-  DateTime _lastPitchUpdate = DateTime.now();
   
-  // Instrument definitions with their tuning notes
+  // Buffer for accumulating audio samples
+  final List<int> _audioBuffer = [];
+  
+  // Instrument definitions with base notes and default octaves
   final Map<String, List<Map<String, dynamic>>> _instruments = {
     'Violin': [
-      {'note': 'E5', 'frequency': 659.25, 'string': 'E'},
-      {'note': 'A4', 'frequency': 440.00, 'string': 'A'},
-      {'note': 'D4', 'frequency': 293.66, 'string': 'D'},
-      {'note': 'G3', 'frequency': 196.00, 'string': 'G'},
+      {'note': 'E', 'defaultOctave': 5, 'string': 'E'},
+      {'note': 'A', 'defaultOctave': 4, 'string': 'A'},
+      {'note': 'D', 'defaultOctave': 4, 'string': 'D'},
+      {'note': 'G', 'defaultOctave': 3, 'string': 'G'},
     ],
     'Viola': [
-      {'note': 'A4', 'frequency': 440.00, 'string': 'A'},
-      {'note': 'D4', 'frequency': 293.66, 'string': 'D'},
-      {'note': 'G3', 'frequency': 196.00, 'string': 'G'},
-      {'note': 'C3', 'frequency': 130.81, 'string': 'C'},
+      {'note': 'A', 'defaultOctave': 4, 'string': 'A'},
+      {'note': 'D', 'defaultOctave': 4, 'string': 'D'},
+      {'note': 'G', 'defaultOctave': 3, 'string': 'G'},
+      {'note': 'C', 'defaultOctave': 3, 'string': 'C'},
     ],
     'Cello': [
-      {'note': 'A3', 'frequency': 220.00, 'string': 'A'},
-      {'note': 'D3', 'frequency': 146.83, 'string': 'D'},
-      {'note': 'G2', 'frequency': 98.00, 'string': 'G'},
-      {'note': 'C2', 'frequency': 65.41, 'string': 'C'},
+      {'note': 'A', 'defaultOctave': 3, 'string': 'A'},
+      {'note': 'D', 'defaultOctave': 3, 'string': 'D'},
+      {'note': 'G', 'defaultOctave': 2, 'string': 'G'},
+      {'note': 'C', 'defaultOctave': 2, 'string': 'C'},
     ],
     'Double Bass': [
-      {'note': 'G2', 'frequency': 98.00, 'string': 'G'},
-      {'note': 'D2', 'frequency': 73.42, 'string': 'D'},
-      {'note': 'A1', 'frequency': 55.00, 'string': 'A'},
-      {'note': 'E1', 'frequency': 41.20, 'string': 'E'},
+      {'note': 'G', 'defaultOctave': 2, 'string': 'G'},
+      {'note': 'D', 'defaultOctave': 2, 'string': 'D'},
+      {'note': 'A', 'defaultOctave': 1, 'string': 'A'},
+      {'note': 'E', 'defaultOctave': 1, 'string': 'E'},
     ],
     'Guitar': [
-      {'note': 'E4', 'frequency': 329.63, 'string': 'E'},
-      {'note': 'B3', 'frequency': 246.94, 'string': 'B'},
-      {'note': 'G3', 'frequency': 196.00, 'string': 'G'},
-      {'note': 'D3', 'frequency': 146.83, 'string': 'D'},
-      {'note': 'A2', 'frequency': 110.00, 'string': 'A'},
-      {'note': 'E2', 'frequency': 82.41, 'string': 'E'},
+      {'note': 'E', 'defaultOctave': 4, 'string': 'E'},
+      {'note': 'B', 'defaultOctave': 3, 'string': 'B'},
+      {'note': 'G', 'defaultOctave': 3, 'string': 'G'},
+      {'note': 'D', 'defaultOctave': 3, 'string': 'D'},
+      {'note': 'A', 'defaultOctave': 2, 'string': 'A'},
+      {'note': 'E', 'defaultOctave': 2, 'string': 'E'},
     ],
     'Flute': [
-      {'note': 'A4', 'frequency': 440.00, 'string': 'Concert A'},
-      {'note': 'Bb4', 'frequency': 466.16, 'string': 'B♭'},
+      {'note': 'A', 'defaultOctave': 4, 'string': 'Concert A'},
+      {'note': 'Bb', 'defaultOctave': 4, 'string': 'B♭'},
     ],
     'Oboe': [
-      {'note': 'A4', 'frequency': 440.00, 'string': 'Concert A'},
-      {'note': 'Bb4', 'frequency': 466.16, 'string': 'B♭'},
+      {'note': 'A', 'defaultOctave': 4, 'string': 'Concert A'},
+      {'note': 'Bb', 'defaultOctave': 4, 'string': 'B♭'},
     ],
     'Clarinet': [
-      {'note': 'A4', 'frequency': 440.00, 'string': 'Concert A'},
-      {'note': 'Bb4', 'frequency': 466.16, 'string': 'B♭'},
+      {'note': 'A', 'defaultOctave': 4, 'string': 'Concert A'},
+      {'note': 'Bb', 'defaultOctave': 4, 'string': 'B♭'},
     ],
     'Trumpet': [
-      {'note': 'A4', 'frequency': 440.00, 'string': 'Concert A'},
-      {'note': 'Bb4', 'frequency': 466.16, 'string': 'B♭'},
-      {'note': 'C5', 'frequency': 523.25, 'string': 'C'},
+      {'note': 'A', 'defaultOctave': 4, 'string': 'Concert A'},
+      {'note': 'Bb', 'defaultOctave': 4, 'string': 'B♭'},
+      {'note': 'C', 'defaultOctave': 5, 'string': 'C'},
     ],
     'French Horn': [
-      {'note': 'A4', 'frequency': 440.00, 'string': 'Concert A'},
-      {'note': 'F4', 'frequency': 349.23, 'string': 'F'},
-      {'note': 'Bb3', 'frequency': 233.08, 'string': 'B♭'},
+      {'note': 'A', 'defaultOctave': 4, 'string': 'Concert A'},
+      {'note': 'F', 'defaultOctave': 4, 'string': 'F'},
+      {'note': 'Bb', 'defaultOctave': 3, 'string': 'B♭'},
     ],
     'Trombone': [
-      {'note': 'A4', 'frequency': 440.00, 'string': 'Concert A'},
-      {'note': 'Bb3', 'frequency': 233.08, 'string': 'B♭'},
-      {'note': 'F3', 'frequency': 174.61, 'string': 'F'},
+      {'note': 'A', 'defaultOctave': 4, 'string': 'Concert A'},
+      {'note': 'Bb', 'defaultOctave': 3, 'string': 'B♭'},
+      {'note': 'F', 'defaultOctave': 3, 'string': 'F'},
     ],
   };
+
+  /// Calculate frequency for a given note and octave
+  /// Uses A4 = 440 Hz as reference
+  double _calculateFrequency(String note, int octave) {
+    // Note to semitone mapping (A4 = 0)
+    final Map<String, int> noteOffsets = {
+      'C': -9,
+      'C#': -8, 'Db': -8,
+      'D': -7,
+      'D#': -6, 'Eb': -6,
+      'E': -5,
+      'F': -4,
+      'F#': -3, 'Gb': -3,
+      'G': -2,
+      'G#': -1, 'Ab': -1,
+      'A': 0,
+      'A#': 1, 'Bb': 1,
+      'B': 2,
+    };
+    
+    final int semitoneOffset = noteOffsets[note] ?? 0;
+    final int octaveOffset = (octave - 4) * 12; // A4 is our reference
+    final int totalSemitones = semitoneOffset + octaveOffset;
+    
+    // A4 = 440 Hz, each semitone is 2^(1/12) times the previous
+    return 440.0 * math.pow(2, totalSemitones / 12.0);
+  }
+
+  /// Get the display note name with octave
+  String _getDisplayNote(String note, int octave) {
+    return '$note$octave';
+  }
 
   @override
   void initState() {
@@ -117,13 +157,15 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
     
     // Select first note of default instrument
     final firstNote = _instruments[_selectedInstrument]!.first;
+    _selectedString = firstNote['string'];
     _selectedNote = firstNote['note'];
-    _targetPitch = firstNote['frequency'];
+    _selectedOctave = firstNote['defaultOctave'];
+    _targetPitch = _calculateFrequency(_selectedNote, _selectedOctave);
     
-    // Initialize pitch detector with optimal settings
+    // Initialize pitch detector with optimal settings for music
     _pitchDetector = PitchDetector(
-      audioSampleRate: 44100,
-      bufferSize: 2048,
+      audioSampleRate: _sampleRate.toDouble(),
+      bufferSize: _bufferSize,
     );
     
     // Check permissions on init
@@ -143,11 +185,12 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
 
   @override
   void dispose() {
+    _pitchUpdateTimer?.cancel();
+    _recordSub?.cancel();
+    _audioRecorder.dispose();
+    _referencePlayer.dispose();
     _tuningAnimationController.dispose();
     _pulseController.dispose();
-    _referencePlayer.dispose();
-    _recordSub?.cancel();
-    _stopListening();
     super.dispose();
   }
 
@@ -163,8 +206,12 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
     try {
       // Request permission if needed
       if (!await _audioRecorder.hasPermission()) {
-        _showError('Microphone permission is required for tuning');
-        return;
+        final hasPermission = await _audioRecorder.hasPermission();
+        debugPrint('Microphone permission status: $hasPermission');
+        if (!hasPermission) {
+          _showError('Microphone permission is required for tuning');
+          return;
+        }
       }
 
       // Check if encoder is supported
@@ -173,18 +220,23 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
         return;
       }
 
+      debugPrint('Starting audio recording...');
+
       // Start streaming audio data
       final stream = await _audioRecorder.startStream(
         const RecordConfig(
           encoder: AudioEncoder.pcm16bits,
-          sampleRate: 44100,
+          sampleRate: _sampleRate,
           numChannels: 1,
+          bitRate: 128000,
         ),
       );
 
       setState(() {
         _isListening = true;
       });
+
+      debugPrint('Audio stream started successfully');
 
       // Process audio data with pitch detection
       _recordSub = stream.listen(
@@ -193,7 +245,11 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
         },
         onError: (error) {
           debugPrint('Audio stream error: $error');
+          _showError('Audio stream error: $error');
           _stopListening();
+        },
+        onDone: () {
+          debugPrint('Audio stream completed');
         },
       );
 
@@ -214,6 +270,9 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
       _recordSub?.cancel();
       _pitchUpdateTimer?.cancel();
       
+      // Clear the audio buffer
+      _audioBuffer.clear();
+      
       if (mounted) {
         setState(() {
           _isListening = false;
@@ -232,28 +291,45 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
   void _processPitch(Uint8List audioData) async {
     if (audioData.isEmpty) return;
     
-    // Debounce pitch updates to avoid overwhelming the UI
-    final now = DateTime.now();
-    if (now.difference(_lastPitchUpdate).inMilliseconds < 100) return;
-    _lastPitchUpdate = now;
-    
     try {
-      // The pitch detector expects the raw PCM16 data directly
-      if (audioData.length < 4000) return; // Need enough samples for analysis (2000 int16 samples = 4000 bytes)
+      // Add the audio data to the buffer
+      _audioBuffer.addAll(audioData);
       
-      // Use pitch detector to analyze the audio
-      final result = await _pitchDetector.getPitchFromIntBuffer(audioData);
+      // The pitch detector needs exactly bufferSize * 2 bytes for PCM16
+      final requiredBytes = _bufferSize * 2;
       
-      if (result.pitched && result.pitch > 50 && result.pitch < 2000) {
-        if (mounted) {
-          setState(() {
-            _currentPitch = result.pitch;
-            _cents = _calculateCents(_currentPitch, _targetPitch);
-          });
+      // Process when we have enough samples
+      while (_audioBuffer.length >= requiredBytes) {
+        // Extract exactly the required number of bytes
+        final intBuffer = Uint8List.fromList(_audioBuffer.take(requiredBytes).toList());
+        
+        // Remove processed bytes from buffer
+        _audioBuffer.removeRange(0, requiredBytes);
+        
+        // Debug logging to verify buffer size
+        debugPrint('Processing buffer of size: ${intBuffer.length} bytes (expected: $requiredBytes)');
+        
+        // Use pitch detector with the buffer
+        final result = await _pitchDetector.getPitchFromIntBuffer(intBuffer);
+        
+        // Debug logging
+        debugPrint('Pitch detection - Pitched: ${result.pitched}, Pitch: ${result.pitch}, Probability: ${result.probability}');
+        
+        // Update UI if a valid pitch is detected
+        if (result.pitched && result.pitch > 50 && result.pitch < 2000) {
+          if (mounted) {
+            setState(() {
+              _currentPitch = result.pitch;
+              _cents = _calculateCents(_currentPitch, _targetPitch);
+            });
+          }
         }
       }
     } catch (e) {
       debugPrint('Error in pitch processing: $e');
+      if (e.toString().contains('InvalidAudioBufferException')) {
+        debugPrint('Buffer size mismatch - check that buffer size matches pitch detector expectations');
+      }
     }
   }
 
@@ -277,7 +353,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
 
     try {
       // Generate a sine wave for the reference tone
-      final sampleRate = 44100;
+      final sampleRate = _sampleRate;
       final duration = 3; // seconds
       final samples = sampleRate * duration;
       final waveData = List<int>.generate(samples, (i) {
@@ -373,14 +449,8 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
   String _getTuningText() {
     if (_currentPitch == 0) return 'Start Tuning';
     
-    final absCents = _cents.abs();
-    if (absCents <= 5) {
-      return 'In Tune!';
-    } else if (_cents > 0) {
-      return 'Too High';
-    } else {
-      return 'Too Low';
-    }
+    // Always show cents value to prevent UI jumping
+    return '${_cents > 0 ? '+' : ''}${_cents.toStringAsFixed(0)} cents';
   }
 
   @override
@@ -443,8 +513,10 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                             setState(() {
                               _selectedInstrument = value;
                               final firstNote = _instruments[value]!.first;
+                              _selectedString = firstNote['string'];
                               _selectedNote = firstNote['note'];
-                              _targetPitch = firstNote['frequency'];
+                              _selectedOctave = firstNote['defaultOctave'];
+                              _targetPitch = _calculateFrequency(_selectedNote, _selectedOctave);
                             });
                           }
                         },
@@ -474,42 +546,145 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    
+                    // String/Note Selection - Full Width Grid
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: math.min(4, _instruments[_selectedInstrument]!.length),
+                      childAspectRatio: 1.2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
                       children: _instruments[_selectedInstrument]!.map((noteData) {
-                        final isSelected = _selectedNote == noteData['note'];
-                        return ChoiceChip(
-                          label: Column(
-                            mainAxisSize: MainAxisSize.min,
+                        final isSelected = _selectedString == noteData['string'];
+                        return Material(
+                          color: isSelected 
+                              ? const Color(0xFF6366F1) 
+                              : Colors.white.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              setState(() {
+                                _selectedString = noteData['string'];
+                                _selectedNote = noteData['note'];
+                                _selectedOctave = noteData['defaultOctave'];
+                                _targetPitch = _calculateFrequency(_selectedNote, _selectedOctave);
+                              });
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: isSelected 
+                                    ? null 
+                                    : Border.all(color: Colors.white30),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    noteData['string'],
+                                    style: TextStyle(
+                                      color: isSelected ? Colors.white : Colors.white70,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _getDisplayNote(noteData['note'], noteData['defaultOctave']),
+                                    style: TextStyle(
+                                      color: isSelected ? Colors.white70 : Colors.white54,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Octave Selection
+                    Row(
+                      children: [
+                        const Text(
+                          'Octave:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Row(
                             children: [
-                              Text(
-                                noteData['string'],
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white : Colors.white70,
-                                  fontWeight: FontWeight.bold,
+                              // Decrease octave button
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.white30),
+                                ),
+                                child: IconButton(
+                                  onPressed: _selectedOctave > 0 ? () {
+                                    setState(() {
+                                      _selectedOctave--;
+                                      _targetPitch = _calculateFrequency(_selectedNote, _selectedOctave);
+                                    });
+                                  } : null,
+                                  icon: const Icon(Icons.remove, color: Colors.white),
+                                  iconSize: 20,
                                 ),
                               ),
-                              Text(
-                                noteData['note'],
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white70 : Colors.white54,
-                                  fontSize: 12,
+                              
+                              // Octave display
+                              Expanded(
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF6366F1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '$_selectedOctave',
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              
+                              // Increase octave button
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.white30),
+                                ),
+                                child: IconButton(
+                                  onPressed: _selectedOctave < 8 ? () {
+                                    setState(() {
+                                      _selectedOctave++;
+                                      _targetPitch = _calculateFrequency(_selectedNote, _selectedOctave);
+                                    });
+                                  } : null,
+                                  icon: const Icon(Icons.add, color: Colors.white),
+                                  iconSize: 20,
                                 ),
                               ),
                             ],
                           ),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            setState(() {
-                              _selectedNote = noteData['note'];
-                              _targetPitch = noteData['frequency'];
-                            });
-                          },
-                          selectedColor: const Color(0xFF6366F1),
-                          backgroundColor: Colors.white.withValues(alpha: 0.1),
-                        );
-                      }).toList(),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -568,14 +743,6 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              if (_cents.abs() > 5 && _currentPitch > 0)
-                                Text(
-                                  '${_cents > 0 ? '+' : ''}${_cents.toStringAsFixed(0)} cents',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.white54,
-                                  ),
-                                ),
                             ],
                           ),
                         ),
@@ -711,7 +878,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                           ),
                         ),
                         Text(
-                          _selectedNote,
+                          _getDisplayNote(_selectedNote, _selectedOctave),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
