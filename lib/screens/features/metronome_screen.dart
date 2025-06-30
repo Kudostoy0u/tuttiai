@@ -135,10 +135,13 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
   }
 
   bool _shouldAccent(int beatNumber) {
-    final pattern = _accentPatterns.firstWhere(
+    final patternData = _accentPatterns.firstWhere(
       (p) => p['name'] == _selectedAccentPattern,
       orElse: () => _accentPatterns.first,
-    )['pattern'] as List<bool>;
+    )['pattern'];
+    
+    // Safely convert List<dynamic> to List<bool>
+    final pattern = (patternData as List).cast<bool>();
     
     if (pattern.isEmpty) return false;
     return pattern[beatNumber % pattern.length];
@@ -227,14 +230,14 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
           ),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             // BPM Display
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
                     Row(
@@ -243,16 +246,16 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                         Text(
                           _bpm.toString(),
                           style: const TextStyle(
-                            fontSize: 72,
+                            fontSize: 64,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 12),
                         const Text(
                           'BPM',
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 20,
                             color: Colors.white70,
                           ),
                         ),
@@ -268,7 +271,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                       child: Text(
                         _getTempoMarking(),
                         style: const TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           color: Color(0xFFD97706),
                           fontWeight: FontWeight.w600,
                         ),
@@ -278,93 +281,95 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             
             // Visual metronome with enhanced pendulum
-            Expanded(
-              child: Card(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Enhanced pendulum with base
-                      Stack(
-                        alignment: Alignment.bottomCenter,
-                        children: [
-                          // Pendulum base
-                          Container(
-                            width: 60,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF374151),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+            Card(
+              child: Container(
+                width: double.infinity,
+                height: 280, // Fixed height to prevent overflow
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Enhanced pendulum with base
+                    Stack(
+                      alignment: Alignment.bottomCenter,
+                      children: [
+                        // Pendulum base
+                        Container(
+                          width: 50,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF374151),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          // Pendulum rod and bob
-                          AnimatedBuilder(
-                            animation: _pendulumController,
-                            builder: (context, child) {
-                              final angle = _isPlaying 
-                                ? math.sin(_pendulumController.value * 2 * math.pi) * 0.5
-                                : 0.0;
-                              return Transform.rotate(
-                                angle: angle,
-                                alignment: Alignment.bottomCenter,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Pendulum bob
-                                    AnimatedBuilder(
-                                      animation: _visualBeatController,
-                                      builder: (context, child) {
-                                        final scale = 1.0 + _visualBeatController.value * 0.2;
-                                        return Transform.scale(
-                                          scale: scale,
-                                          child: Container(
-                                            width: 24,
-                                            height: 24,
-                                            decoration: BoxDecoration(
-                                              color: _isPlaying 
-                                                ? const Color(0xFFD97706)
-                                                : const Color(0xFF6B7280),
-                                              shape: BoxShape.circle,
-                                              boxShadow: _isPlaying ? [
-                                                BoxShadow(
-                                                  color: const Color(0xFFD97706).withOpacity(0.3),
-                                                  blurRadius: 8,
-                                                  spreadRadius: 2,
-                                                ),
-                                              ] : null,
-                                            ),
+                        ),
+                        // Pendulum rod and bob
+                        AnimatedBuilder(
+                          animation: _pendulumController,
+                          builder: (context, child) {
+                            final angle = _isPlaying 
+                              ? math.sin(_pendulumController.value * 2 * math.pi) * 0.5
+                              : 0.0;
+                            return Transform.rotate(
+                              angle: angle,
+                              alignment: Alignment.bottomCenter,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Pendulum bob
+                                  AnimatedBuilder(
+                                    animation: _visualBeatController,
+                                    builder: (context, child) {
+                                      final scale = 1.0 + _visualBeatController.value * 0.2;
+                                      return Transform.scale(
+                                        scale: scale,
+                                        child: Container(
+                                          width: 20,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            color: _isPlaying 
+                                              ? const Color(0xFFD97706)
+                                              : const Color(0xFF6B7280),
+                                            shape: BoxShape.circle,
+                                            boxShadow: _isPlaying ? [
+                                              BoxShadow(
+                                                color: const Color(0xFFD97706).withOpacity(0.3),
+                                                blurRadius: 6,
+                                                spreadRadius: 1,
+                                              ),
+                                            ] : null,
                                           ),
-                                        );
-                                      },
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  // Pendulum rod
+                                  Container(
+                                    width: 3,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF6B7280),
+                                      borderRadius: BorderRadius.circular(2),
                                     ),
-                                    // Pendulum rod
-                                    Container(
-                                      width: 4,
-                                      height: 120,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF6B7280),
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      
-                      // Enhanced beat indicators with subdivisions
-                      Column(
-                        children: [
-                          // Main beats
-                          Row(
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Enhanced beat indicators with subdivisions
+                    Column(
+                      children: [
+                        // Main beats
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(_timeSignature, (index) {
                               return AnimatedBuilder(
@@ -375,9 +380,9 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                                   final isAccent = index == 0 || _shouldAccent(index);
                                   
                                   return Container(
-                                    margin: const EdgeInsets.symmetric(horizontal: 6),
-                                    width: 50,
-                                    height: 50,
+                                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                                    width: 40,
+                                    height: 40,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: isCurrentBeat
@@ -386,7 +391,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                                           : Colors.white.withOpacity(0.1),
                                       border: Border.all(
                                         color: isAccent ? const Color(0xFF6366F1) : const Color(0xFFD97706),
-                                        width: isAccent ? 3 : 2,
+                                        width: isAccent ? 2 : 1,
                                       ),
                                     ),
                                     child: Center(
@@ -394,7 +399,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                                         '${index + 1}',
                                         style: TextStyle(
                                           color: isCurrentBeat ? Colors.white : Colors.white60,
-                                          fontSize: isAccent ? 18 : 16,
+                                          fontSize: isAccent ? 16 : 14,
                                           fontWeight: isAccent ? FontWeight.bold : FontWeight.w600,
                                         ),
                                       ),
@@ -404,11 +409,14 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                               );
                             }),
                           ),
-                          
-                          // Subdivision indicators
-                          if (_subdivision > 1) ...[
-                            const SizedBox(height: 16),
-                            Row(
+                        ),
+                        
+                        // Subdivision indicators
+                        if (_subdivision > 1) ...[
+                          const SizedBox(height: 12),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: List.generate(_subdivision * _timeSignature, (index) {
                                 return AnimatedBuilder(
@@ -423,8 +431,8 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                                       scale: scale,
                                       child: Container(
                                         margin: const EdgeInsets.symmetric(horizontal: 2),
-                                        width: 8,
-                                        height: 8,
+                                        width: 6,
+                                        height: 6,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           color: isCurrentSubdivision
@@ -437,31 +445,31 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                                 );
                               }),
                             ),
-                          ],
+                          ),
                         ],
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             
             // Subdivision selector
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   children: [
                     const Text(
                       'Note Subdivision',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -484,16 +492,16 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                             }
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             decoration: BoxDecoration(
                               color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               label,
                               style: TextStyle(
                                 color: isSelected ? Colors.white : Colors.white70,
-                                fontSize: 24,
+                                fontSize: 20,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               ),
                             ),
@@ -505,7 +513,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
             // Time signature and accent pattern
             Row(
@@ -513,20 +521,21 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                 Expanded(
                   child: Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       child: Column(
                         children: [
                           const Text(
                             'Time Signature',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 14,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Wrap(
-                            spacing: 6,
+                            spacing: 4,
+                            runSpacing: 4,
                             children: [2, 3, 4, 5, 6].map((beats) {
                               final isSelected = beats == _timeSignature;
                               return GestureDetector(
@@ -537,16 +546,16 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                                   });
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
                                     '$beats/4',
                                     style: TextStyle(
                                       color: isSelected ? Colors.white : Colors.white70,
-                                      fontSize: 12,
+                                      fontSize: 10,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                     ),
                                   ),
@@ -559,22 +568,22 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       child: Column(
                         children: [
                           const Text(
                             'Accent Pattern',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 14,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           DropdownButton<String>(
                             value: _selectedAccentPattern,
                             onChanged: (String? newValue) {
@@ -585,7 +594,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                               }
                             },
                             dropdownColor: const Color(0xFF1E1E3F),
-                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                            style: const TextStyle(color: Colors.white, fontSize: 10),
                             underline: Container(),
                             items: _accentPatterns.map<DropdownMenuItem<String>>((pattern) {
                               return DropdownMenuItem<String>(
@@ -601,12 +610,12 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
             // BPM controls
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   children: [
                     Row(
@@ -639,26 +648,26 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     
                     // Common BPM presets
                     Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                      spacing: 4,
+                      runSpacing: 4,
                       children: _commonBpms.map((bpm) {
                         return GestureDetector(
                           onTap: () => _updateBpm(bpm),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: bpm == _bpm ? const Color(0xFFD97706) : Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               bpm.toString(),
                               style: TextStyle(
                                 color: bpm == _bpm ? Colors.white : Colors.white70,
-                                fontSize: 11,
+                                fontSize: 10,
                                 fontWeight: bpm == _bpm ? FontWeight.bold : FontWeight.normal,
                               ),
                             ),
@@ -670,7 +679,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             
             // Control buttons
             Row(
@@ -682,7 +691,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF059669),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -690,12 +699,12 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.touch_app, size: 20),
-                          SizedBox(width: 8),
+                          Icon(Icons.touch_app, size: 18),
+                          SizedBox(width: 6),
                           Text(
                             'Tap Tempo',
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -703,7 +712,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                 ],
                 Expanded(
                   flex: _showTapTempo ? 2 : 1,
@@ -712,7 +721,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _isPlaying ? Colors.red : const Color(0xFFD97706),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -722,13 +731,13 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                       children: [
                         Icon(
                           _isPlaying ? Icons.stop : Icons.play_arrow,
-                          size: 32,
+                          size: 28,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Text(
                           _isPlaying ? 'Stop' : 'Start',
                           style: const TextStyle(
-                            fontSize: 24,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -738,6 +747,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                 ),
               ],
             ),
+            const SizedBox(height: 16), // Bottom padding for scrolling
           ],
         ),
       ),

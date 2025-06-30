@@ -61,7 +61,7 @@ lib/
 │       ├── metronome_screen.dart      # Digital metronome
 │       └── recording_library_screen.dart # Practice recordings
 └── assets/
-    └── tonic.webp                     # App logo
+    └── tonic.jpg                     # App logo
 ```
 
 ## Getting Started

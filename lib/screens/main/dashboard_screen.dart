@@ -14,7 +14,7 @@ class DashboardScreen extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 200.0,
+            expandedHeight: 200,
             floating: false,
             pinned: true,
             backgroundColor: const Color(0xFF0F0F23),
@@ -45,19 +45,18 @@ class DashboardScreen extends StatelessWidget {
                       Container(
                         width: 80,
                         height: 80,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
+                        child: ClipOval(
                           child: Image.asset(
-                            'assets/tonic.webp',
+                            'assets/tonic.jpg',
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
-                                  color: const Color(0xFF6366F1),
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Color(0xFF6366F1),
                                 ),
                                 child: const Icon(
                                   Icons.music_note,
@@ -82,7 +81,7 @@ class DashboardScreen extends StatelessWidget {
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 1,
+                childAspectRatio: 1.1, // Slightly taller cards to accommodate text
               ),
               delegate: SliverChildListDelegate([
                 _buildFeatureCard(
@@ -90,7 +89,7 @@ class DashboardScreen extends StatelessWidget {
                   'Sheet Music\nRecommendations',
                   Icons.library_music,
                   const Color(0xFF6366F1),
-                  'AI-powered sheet music suggestions based on your skill level and preferences',
+                  'AI-powered sheet music suggestions',
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const SheetMusicScreen()),
@@ -112,7 +111,7 @@ class DashboardScreen extends StatelessWidget {
                   'Intonation\nChecker',
                   Icons.graphic_eq,
                   const Color(0xFFDC2626),
-                  'Check and improve your pitch accuracy',
+                  'Check pitch accuracy',
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const IntonationScreen()),
@@ -123,7 +122,7 @@ class DashboardScreen extends StatelessWidget {
                   'Metronome',
                   Icons.timer,
                   const Color(0xFFD97706),
-                  'Keep perfect time with our digital metronome',
+                  'Keep perfect time',
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const MetronomeScreen()),
@@ -134,7 +133,7 @@ class DashboardScreen extends StatelessWidget {
                   'Recording\nLibrary',
                   Icons.mic,
                   const Color(0xFF7C3AED),
-                  'Record and organize your practice sessions',
+                  'Record practice sessions',
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const RecordingLibraryScreen()),
@@ -171,42 +170,51 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   icon,
-                  size: 32,
+                  size: 28,
                   color: color,
                 ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-                textAlign: TextAlign.center,
-              ),
               const SizedBox(height: 8),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withOpacity(0.7),
+              Flexible(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              Flexible(
+                child: Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white.withOpacity(0.7),
+                    height: 1.2,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
