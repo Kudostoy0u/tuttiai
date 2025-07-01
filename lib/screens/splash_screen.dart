@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/theme_image.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -37,8 +38,10 @@ class SplashScreen extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(24),
-                  child: Image.asset(
-                    'assets/tonic.jpg',
+                  child: ThemeImage(
+                    lightImagePath: 'assets/tuttiicon.png',
+                    width: 120,
+                    height: 120,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
@@ -60,7 +63,7 @@ class SplashScreen extends StatelessWidget {
               
               // App name
               Text(
-                'TuttiAI',
+                'Tutti',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,

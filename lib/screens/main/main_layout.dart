@@ -50,10 +50,10 @@ class _MainLayoutState extends State<MainLayout> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E3F),
+          color: Theme.of(context).cardColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -65,7 +65,7 @@ class _MainLayoutState extends State<MainLayout> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           selectedItemColor: const Color(0xFF6366F1),
-          unselectedItemColor: Colors.white54,
+          unselectedItemColor: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
           type: BottomNavigationBarType.fixed,
           items: const [
             BottomNavigationBarItem(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:record/record.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -7,6 +8,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:math' as math;
+
+enum RecordState { stop, record, pause }
 
 class RecordingLibraryScreen extends StatefulWidget {
   const RecordingLibraryScreen({super.key});
@@ -177,15 +180,19 @@ class _RecordingLibraryScreenState extends State<RecordingLibraryScreen> with Ti
 
   Future<void> _playRecording(RecordingItem recording) async {
     if (_playingItem?.id == recording.id) {
-      await _player.stop();
+      // If currently playing this recording, stop it
       setState(() => _playingItem = null);
+      await _player.stop();
     } else {
+      // If playing different recording or not playing, start this one
+      setState(() => _playingItem = recording);
       try {
         await _player.setFilePath(recording.path);
         await _player.play();
-        setState(() => _playingItem = recording);
       } catch (e) {
         debugPrint('Error playing recording: $e');
+        // Reset state if there's an error
+        setState(() => _playingItem = null);
       }
     }
   }
@@ -259,7 +266,7 @@ class _RecordingLibraryScreenState extends State<RecordingLibraryScreen> with Ti
     final minutes = duration.inMinutes;
     final seconds = duration.inSeconds % 60;
     final milliseconds = (duration.inMilliseconds % 1000) ~/ 100;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}.${milliseconds}';
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}.$milliseconds';
   }
 
   @override
@@ -268,11 +275,10 @@ class _RecordingLibraryScreenState extends State<RecordingLibraryScreen> with Ti
       appBar: AppBar(
         title: const Text(
           'Recordings',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF0F0F23),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -292,14 +298,13 @@ class _RecordingLibraryScreenState extends State<RecordingLibraryScreen> with Ti
                       style: const TextStyle(
                         fontSize: 42,
                         fontWeight: FontWeight.w300,
-                        color: Colors.white,
                         fontFeatures: [FontFeature.tabularFigures()],
                       ),
                     ),
                     const SizedBox(height: 24),
                     
                     // Waveform visualization
-                    Container(
+                    SizedBox(
                       height: 60,
                       width: double.infinity,
                       child: CustomPaint(
@@ -336,7 +341,7 @@ class _RecordingLibraryScreenState extends State<RecordingLibraryScreen> with Ti
                             ),
                             child: IconButton(
                               onPressed: _startRecording,
-                              icon: const Icon(Icons.fiber_manual_record, color: Colors.white, size: 32),
+                              icon: const Icon(Icons.fiber_manual_record, size: 32),
                             ),
                           ),
                         ] else ...[
@@ -346,7 +351,7 @@ class _RecordingLibraryScreenState extends State<RecordingLibraryScreen> with Ti
                             height: 56,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white30, width: 2),
+                              border: Border.all(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3) ?? Colors.white30, width: 2),
                             ),
                             child: IconButton(
                               onPressed: _recordState == RecordState.record 
@@ -354,7 +359,6 @@ class _RecordingLibraryScreenState extends State<RecordingLibraryScreen> with Ti
                                   : _resumeRecording,
                               icon: Icon(
                                 _recordState == RecordState.record ? Icons.pause : Icons.play_arrow,
-                                color: Colors.white,
                                 size: 24,
                               ),
                             ),
@@ -385,10 +389,10 @@ class _RecordingLibraryScreenState extends State<RecordingLibraryScreen> with Ti
           // Recordings list
           Expanded(
             child: _recordings.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'No recordings yet',
-                      style: TextStyle(color: Colors.white54),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.54) ?? Colors.white54),
                     ),
                   )
                 : ListView.builder(
@@ -421,16 +425,15 @@ class _RecordingLibraryScreenState extends State<RecordingLibraryScreen> with Ti
                           title: Text(
                             recording.title,
                             style: const TextStyle(
-                              color: Colors.white,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           subtitle: Text(
                             '${_formatDuration(recording.duration)} • ${_formatDate(recording.date)}',
-                            style: const TextStyle(color: Colors.white54),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.54) ?? Colors.white54),
                           ),
                           trailing: PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert, color: Colors.white54),
+                            icon: Icon(Icons.more_vert, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.54) ?? Colors.white54),
                             onSelected: (value) {
                               switch (value) {
                                 case 'rename':

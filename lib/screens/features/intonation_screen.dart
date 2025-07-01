@@ -83,12 +83,10 @@ class _IntonationScreenState extends State<IntonationScreen> with TickerProvider
           'Intonation Checker',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
           ),
         ),
-        backgroundColor: const Color(0xFF0F0F23),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -107,7 +105,6 @@ class _IntonationScreenState extends State<IntonationScreen> with TickerProvider
                     const Text(
                       'Scale:',
                       style: TextStyle(
-                        color: Colors.white,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -119,8 +116,8 @@ class _IntonationScreenState extends State<IntonationScreen> with TickerProvider
                           _selectedScale = newValue!;
                         });
                       },
-                      dropdownColor: const Color(0xFF1E1E3F),
-                      style: const TextStyle(color: Colors.white),
+                      dropdownColor: Theme.of(context).cardColor,
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                       items: _scales.map<DropdownMenuItem<String>>((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
@@ -144,7 +141,6 @@ class _IntonationScreenState extends State<IntonationScreen> with TickerProvider
                       const Text(
                         'Pitch Analysis',
                         style: TextStyle(
-                          color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -157,10 +153,10 @@ class _IntonationScreenState extends State<IntonationScreen> with TickerProvider
                         children: [
                           Column(
                             children: [
-                              const Text(
+                              Text(
                                 'Target',
                                 style: TextStyle(
-                                  color: Colors.white70,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                                   fontSize: 12,
                                 ),
                               ),
@@ -176,10 +172,10 @@ class _IntonationScreenState extends State<IntonationScreen> with TickerProvider
                           ),
                           Column(
                             children: [
-                              const Text(
+                              Text(
                                 'Current',
                                 style: TextStyle(
-                                  color: Colors.white70,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                                   fontSize: 12,
                                 ),
                               ),
@@ -195,10 +191,10 @@ class _IntonationScreenState extends State<IntonationScreen> with TickerProvider
                           ),
                           Column(
                             children: [
-                              const Text(
+                              Text(
                                 'Difference',
                                 style: TextStyle(
-                                  color: Colors.white70,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                                   fontSize: 12,
                                 ),
                               ),
@@ -254,7 +250,6 @@ class _IntonationScreenState extends State<IntonationScreen> with TickerProvider
                     const Text(
                       'Session Statistics',
                       style: TextStyle(
-                        color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -378,15 +373,14 @@ class _IntonationScreenState extends State<IntonationScreen> with TickerProvider
         Text(
           value,
           style: const TextStyle(
-            color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white70,
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
             fontSize: 12,
           ),
         ),

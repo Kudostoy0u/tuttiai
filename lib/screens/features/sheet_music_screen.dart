@@ -65,27 +65,25 @@ class _SheetMusicScreenState extends State<SheetMusicScreen> {
           'Sheet Music Finder',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
           ),
         ),
-        backgroundColor: const Color(0xFF0F0F23),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(
+                  const CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
                     'AI is analyzing your preferences...',
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
                   ),
                 ],
               ),
@@ -108,16 +106,15 @@ class _SheetMusicScreenState extends State<SheetMusicScreen> {
                           Text(
                             'Personalized for You',
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Based on your skill level, preferences, and practice history',
-                        style: TextStyle(color: Colors.white70),
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
                       ),
                     ],
                   ),
@@ -165,13 +162,12 @@ class _SheetMusicScreenState extends State<SheetMusicScreen> {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
                         ),
                       ),
                       Text(
                         recommendation['composer'],
-                        style: const TextStyle(
-                          color: Colors.white70,
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                           fontSize: 14,
                         ),
                       ),
@@ -215,8 +211,8 @@ class _SheetMusicScreenState extends State<SheetMusicScreen> {
             // Description
             Text(
               recommendation['description'],
-              style: const TextStyle(
-                color: Colors.white60,
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                 fontSize: 14,
               ),
             ),
@@ -232,19 +228,19 @@ class _SheetMusicScreenState extends State<SheetMusicScreen> {
                       onPressed: () {
                         // Preview sheet music
                       },
-                      icon: const Icon(Icons.visibility, color: Colors.white60),
+                      icon: Icon(Icons.visibility, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
                     ),
                     IconButton(
                       onPressed: () {
                         // Play audio preview
                       },
-                      icon: const Icon(Icons.play_arrow, color: Colors.white60),
+                      icon: Icon(Icons.play_arrow, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
                     ),
                     IconButton(
                       onPressed: () {
                         // Add to favorites
                       },
-                      icon: const Icon(Icons.favorite_border, color: Colors.white60),
+                      icon: Icon(Icons.favorite_border, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
                     ),
                   ],
                 ),
@@ -276,18 +272,18 @@ class _SheetMusicScreenState extends State<SheetMusicScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.white60),
+          Icon(icon, size: 14, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
           const SizedBox(width: 4),
           Text(
             text,
-            style: const TextStyle(
-              color: Colors.white60,
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
               fontSize: 12,
             ),
           ),
@@ -300,7 +296,7 @@ class _SheetMusicScreenState extends State<SheetMusicScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -310,8 +306,8 @@ class _SheetMusicScreenState extends State<SheetMusicScreen> {
           const SizedBox(width: 4),
           Text(
             rating.toString(),
-            style: const TextStyle(
-              color: Colors.white60,
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
               fontSize: 12,
             ),
           ),

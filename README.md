@@ -1,4 +1,4 @@
-# TuttiAI 🎵
+# Tutti 🎵
 
 Your AI-powered music companion for smart sheet music recommendations and comprehensive music practice tools.
 
@@ -124,7 +124,7 @@ This is an MVP (Minimum Viable Product) version with the following characteristi
 
 ## App Flow
 
-1. **Splash Screen**: Shows TuttiAI logo while loading
+1. **Splash Screen**: Shows Tutti logo while loading
 2. **Authentication**: Login or signup with email/password
 3. **Onboarding** (new users): 6-step musical profile setup
 4. **Dashboard**: Feature cards for all music tools
@@ -159,4 +159,4 @@ This project is licensed under the MIT License.
 
 ---
 
-**TuttiAI** - Making music practice smarter, one note at a time! 🎼✨
+**Tutti** - Making music practice smarter, one note at a time! 🎼✨

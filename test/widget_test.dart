@@ -10,14 +10,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tuttiai/main.dart';
 
 void main() {
-  testWidgets('TuttiAI app loads correctly', (WidgetTester tester) async {
+  testWidgets('Tutti app loads correctly', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const TuttiAIApp());
+    await tester.pumpWidget(const TuttiApp());
 
     // Wait for the app to finish loading
     await tester.pumpAndSettle();
 
     // Verify that the app loads (we expect either splash screen or login screen)
-    expect(find.byType(TuttiAIApp), findsOneWidget);
+    expect(find.byType(TuttiApp), findsOneWidget);
   });
 }

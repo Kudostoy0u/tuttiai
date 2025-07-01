@@ -14,7 +14,7 @@ class MetronomeScreen extends StatefulWidget {
 class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderStateMixin {
   // State variables
   bool _isPlaying = false;
-  bool _isInitialized = true; // Always initialized since no audio loading needed
+  final bool _isInitialized = true; // Always initialized since no audio loading needed
   int _bpm = 120;
   int _timeSignature = 4;
   int _currentBeat = 0;
@@ -287,17 +287,15 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
           'Metronome',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
           ),
         ),
-        backgroundColor: const Color(0xFF0F0F23),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.touch_app, color: Colors.white),
+            icon: const Icon(Icons.touch_app),
             onPressed: _tapTempo,
             tooltip: 'Tap Tempo',
           ),
@@ -321,15 +319,14 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                           style: const TextStyle(
                             fontSize: 64,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Text(
+                        Text(
                           'BPM',
                           style: TextStyle(
                             fontSize: 20,
-                            color: Colors.white70,
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -473,7 +470,9 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                                           child: Text(
                                             '${index + 1}',
                                             style: TextStyle(
-                                              color: isCurrentBeat ? Colors.white : Colors.white60,
+                                              color: isCurrentBeat 
+                                                ? Theme.of(context).textTheme.bodyLarge?.color 
+                                                : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
                                               fontSize: isAccent ? 16 : 14,
                                               fontWeight: isAccent ? FontWeight.bold : FontWeight.w600,
                                             ),
@@ -571,7 +570,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                       children: [
                         IconButton(
                           onPressed: () => _updateBpm(_bpm - 1),
-                          icon: const Icon(Icons.remove, color: Colors.white),
+                          icon: Icon(Icons.remove, color: Theme.of(context).iconTheme.color),
                           style: IconButton.styleFrom(
                             backgroundColor: Colors.white.withOpacity(0.1),
                           ),
@@ -589,7 +588,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                         ),
                         IconButton(
                           onPressed: () => _updateBpm(_bpm + 1),
-                          icon: const Icon(Icons.add, color: Colors.white),
+                          icon: Icon(Icons.add, color: Theme.of(context).iconTheme.color),
                           style: IconButton.styleFrom(
                             backgroundColor: Colors.white.withOpacity(0.1),
                           ),
@@ -614,7 +613,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                             child: Text(
                               bpm.toString(),
                               style: TextStyle(
-                                color: bpm == _bpm ? Colors.white : Colors.white70,
+                                color: bpm == _bpm ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                                 fontSize: 10,
                                 fontWeight: bpm == _bpm ? FontWeight.bold : FontWeight.normal,
                               ),
@@ -639,7 +638,6 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                     const Text(
                       'Note Subdivision',
                       style: TextStyle(
-                        color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
@@ -677,7 +675,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                             child: Text(
                               label,
                               style: TextStyle(
-                                color: isSelected ? Colors.white : Colors.white70,
+                                color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                                 fontSize: 20,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                               ),
@@ -705,7 +703,6 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                             const Text(
                               'Time Signature',
                               style: TextStyle(
-                                color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -751,7 +748,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                                         child: Text(
                                           display,
                                           style: TextStyle(
-                                            color: isSelected ? Colors.white : Colors.white70,
+                                            color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                                             fontSize: 10,
                                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                           ),
@@ -777,7 +774,6 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                             const Text(
                               'Accent Pattern',
                               style: TextStyle(
-                                color: Colors.white,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -795,7 +791,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
                                 }
                               },
                               dropdownColor: const Color(0xFF1E1E3F),
-                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                               underline: Container(),
                               items: _accentPatterns.map<DropdownMenuItem<String>>((pattern) {
                                 return DropdownMenuItem<String>(

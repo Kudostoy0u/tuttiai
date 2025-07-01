@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'signup_screen.dart';
+import '../../widgets/theme_image.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -59,14 +60,19 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0F0F23),
-              Color(0xFF1E1E3F),
-            ],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [
+                    const Color(0xFF0F0F23),
+                    const Color(0xFF1E1E3F),
+                  ]
+                : [
+                    Colors.white,
+                    Colors.grey[100]!,
+                  ],
           ),
         ),
         child: SafeArea(
@@ -97,8 +103,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: Image.asset(
-                            'assets/tonic.webp',
+                          child: ThemeImage(
+                            lightImagePath: 'assets/tutti.png',
+                            width: 80,
+                            height: 80,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
@@ -118,10 +126,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       
                       Text(
-                        'Welcome to TuttiAI',
+                        'Welcome to Tutti',
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -130,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Text(
                         'Sign in to continue your musical journey',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.white70,
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -140,13 +148,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          labelStyle: const TextStyle(color: Colors.white70),
-                          prefixIcon: const Icon(Icons.email, color: Colors.white70),
+                          labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                          prefixIcon: Icon(Icons.email, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.1),
+                          fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -168,22 +176,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          labelStyle: const TextStyle(color: Colors.white70),
-                          prefixIcon: const Icon(Icons.lock, color: Colors.white70),
+                          labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                          prefixIcon: Icon(Icons.lock, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                              color: Colors.white70,
+                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                             ),
                             onPressed: () {
                               setState(() => _obscurePassword = !_obscurePassword);
                             },
                           ),
                           filled: true,
-                          fillColor: Colors.white.withOpacity(0.1),
+                          fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -237,7 +245,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Text(
                             "Don't have an account? ",
-                            style: TextStyle(color: Colors.white70),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
                           ),
                           GestureDetector(
                             onTap: () {

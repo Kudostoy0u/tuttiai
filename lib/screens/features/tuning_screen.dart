@@ -461,12 +461,10 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
           'Tuner',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
           ),
         ),
-        backgroundColor: const Color(0xFF0F0F23),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -486,7 +484,6 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -500,7 +497,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                         value: _selectedInstrument,
                         isExpanded: true,
                         dropdownColor: const Color(0xFF1E1E3F),
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(),
                         underline: const SizedBox(),
                         items: _instruments.keys.map((instrument) {
                           return DropdownMenuItem(
@@ -542,7 +539,6 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -585,7 +581,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                   Text(
                                     noteData['string'],
                                     style: TextStyle(
-                                      color: isSelected ? Colors.white : Colors.white70,
+                                      color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 18,
                                     ),
@@ -594,7 +590,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                   Text(
                                     _getDisplayNote(noteData['note'], noteData['defaultOctave']),
                                     style: TextStyle(
-                                      color: isSelected ? Colors.white70 : Colors.white54,
+                                      color: isSelected ? Colors.white70 : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.54),
                                       fontSize: 12,
                                     ),
                                   ),
@@ -616,7 +612,6 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -637,7 +632,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                       _targetPitch = _calculateFrequency(_selectedNote, _selectedOctave);
                                     });
                                   } : null,
-                                  icon: const Icon(Icons.remove, color: Colors.white),
+                                  icon: Icon(Icons.remove, color: Theme.of(context).iconTheme.color),
                                   iconSize: 20,
                                 ),
                               ),
@@ -677,7 +672,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                       _targetPitch = _calculateFrequency(_selectedNote, _selectedOctave);
                                     });
                                   } : null,
-                                  icon: const Icon(Icons.add, color: Colors.white),
+                                  icon: Icon(Icons.add, color: Theme.of(context).iconTheme.color),
                                   iconSize: 20,
                                 ),
                               ),
@@ -721,7 +716,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                     child: Icon(
                                       _isListening ? Icons.graphic_eq : Icons.mic_off,
                                       size: 48,
-                                      color: _isListening ? _getTuningColor() : Colors.white30,
+                                      color: _isListening ? _getTuningColor() : Theme.of(context).iconTheme.color?.withOpacity(0.3),
                                     ),
                                   );
                                 },
@@ -732,7 +727,6 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
                                 ),
                               ),
                               Text(
@@ -870,17 +864,16 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Target Note',
                           style: TextStyle(
-                            color: Colors.white54,
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.54),
                             fontSize: 14,
                           ),
                         ),
                         Text(
                           _getDisplayNote(_selectedNote, _selectedOctave),
                           style: const TextStyle(
-                            color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -890,17 +883,16 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text(
+                        Text(
                           'Target Frequency',
                           style: TextStyle(
-                            color: Colors.white54,
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.54),
                             fontSize: 14,
                           ),
                         ),
                         Text(
                           '${_targetPitch.toStringAsFixed(2)} Hz',
                           style: const TextStyle(
-                            color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
@@ -971,7 +963,7 @@ class TuningMeterPainter extends CustomPainter {
     
     // Draw center mark
     final centerMarkPaint = Paint()
-      ..color = Colors.white
+      ..color = color.withOpacity(0.7)
       ..strokeWidth = 3;
     
     final centerAngle = math.pi * 1.5;

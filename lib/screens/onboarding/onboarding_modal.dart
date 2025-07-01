@@ -51,8 +51,8 @@ class _OnboardingModalState extends State<OnboardingModal> {
   ];
 
   final List<String> _genres = [
-    'Classical', 'Jazz', 'Pop', 'Rock', 'Blues', 'Country', 
-    'Electronic', 'R&B', 'Folk', 'World Music'
+    'Romantic', 'Classical', 'Baroque', 'Modern', 'Sonata', 
+    'Solo', 'Concerto', 'Chamber Music'
   ];
 
   final List<String> _frequencies = [
@@ -200,7 +200,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
         ),
         const SizedBox(height: 24),
         Text(
-          'Welcome to TuttiAI!',
+          'Welcome to Tutti!',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: Colors.white,
@@ -445,7 +445,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 16),
               GestureDetector(
                 onTap: () => setState(() => _hasTeacher = !_hasTeacher),

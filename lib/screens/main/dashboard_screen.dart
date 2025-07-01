@@ -4,6 +4,7 @@ import '../features/tuning_screen.dart';
 import '../features/intonation_screen.dart';
 import '../features/metronome_screen.dart';
 import '../features/recording_library_screen.dart';
+import '../../widgets/theme_image.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -17,26 +18,29 @@ class DashboardScreen extends StatelessWidget {
             expandedHeight: 200,
             floating: false,
             pinned: true,
-            backgroundColor: const Color(0xFF0F0F23),
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
               centerTitle: false,
               title: const Text(
-                'TuttiAI',
+                'Tutti',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
                 ),
               ),
               background: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF0F0F23),
-                      Color(0xFF1E1E3F),
-                    ],
+                    colors: Theme.of(context).brightness == Brightness.dark
+                        ? [
+                            const Color(0xFF0F0F23),
+                            const Color(0xFF1E1E3F),
+                          ]
+                        : [
+                            Colors.white,
+                            Colors.grey[100]!,
+                          ],
                   ),
                 ),
                 child: SafeArea(
@@ -50,8 +54,10 @@ class DashboardScreen extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                         child: ClipOval(
-                          child: Image.asset(
-                            'assets/tonic.jpg',
+                          child: ThemeImage(
+                            lightImagePath: 'assets/tuttiicon.png',
+                            width: 80,
+                            height: 80,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
@@ -164,11 +170,16 @@ class DashboardScreen extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E3F),
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
+          border: Theme.of(context).brightness == Brightness.light
+              ? Border.all(color: Colors.grey.withOpacity(0.3), width: 1)
+              : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -199,7 +210,6 @@ class DashboardScreen extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
                     height: 1.2,
                   ),
                   textAlign: TextAlign.center,
@@ -213,7 +223,7 @@ class DashboardScreen extends StatelessWidget {
                   description,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.white.withOpacity(0.7),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                     height: 1.2,
                   ),
                   textAlign: TextAlign.center,

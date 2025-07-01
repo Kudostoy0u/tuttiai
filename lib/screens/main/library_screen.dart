@@ -30,15 +30,13 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           'Library',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
           ),
         ),
-        backgroundColor: const Color(0xFF0F0F23),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: const Color(0xFF6366F1),
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
+          labelColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+          unselectedLabelColor: Theme.of(context).brightness == Brightness.dark ? Colors.white60 : Colors.black54,
           tabs: const [
             Tab(text: 'Sheet Music'),
             Tab(text: 'Recordings'),
@@ -64,13 +62,13 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
         children: [
           // Search bar
           TextField(
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
             decoration: InputDecoration(
               hintText: 'Search sheet music...',
-              hintStyle: const TextStyle(color: Colors.white60),
-              prefixIcon: const Icon(Icons.search, color: Colors.white60),
+              hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+              prefixIcon: Icon(Icons.search, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
               filled: true,
-              fillColor: Colors.white.withOpacity(0.1),
+              fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -123,13 +121,13 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
             children: [
               Expanded(
                 child: TextField(
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                   decoration: InputDecoration(
                     hintText: 'Search recordings...',
-                    hintStyle: const TextStyle(color: Colors.white60),
-                    prefixIcon: const Icon(Icons.search, color: Colors.white60),
+                    hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+                    prefixIcon: Icon(Icons.search, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
+                    fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -142,7 +140,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
                 onPressed: () {
                   // Show date picker
                 },
-                icon: const Icon(Icons.calendar_today, color: Colors.white60),
+                icon: Icon(Icons.calendar_today, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
               ),
             ],
           ),
@@ -212,10 +210,10 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
         onSelected: (value) {
           // Handle filter selection
         },
-        backgroundColor: Colors.white.withOpacity(0.1),
+        backgroundColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
         selectedColor: const Color(0xFF6366F1),
         labelStyle: TextStyle(
-          color: isSelected ? Colors.white : Colors.white70,
+          color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
         ),
         checkmarkColor: Colors.white,
       ),
@@ -240,8 +238,8 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyLarge?.color,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -250,27 +248,27 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           children: [
             Text(
               composer,
-              style: const TextStyle(color: Colors.white70),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
             ),
             const SizedBox(height: 4),
             Row(
               children: [
                 Text(
                   genre,
-                  style: const TextStyle(color: Colors.white60, fontSize: 12),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 12),
                 ),
                 const SizedBox(width: 8),
                 Icon(Icons.star, size: 16, color: Colors.amber),
                 Text(
                   rating.toString(),
-                  style: const TextStyle(color: Colors.white60, fontSize: 12),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 12),
                 ),
               ],
             ),
           ],
         ),
         trailing: IconButton(
-          icon: const Icon(Icons.more_vert, color: Colors.white60),
+          icon: Icon(Icons.more_vert, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
           onPressed: () {
             // Show options menu
           },
@@ -297,8 +295,8 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyLarge?.color,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -307,11 +305,11 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           children: [
             Text(
               duration,
-              style: const TextStyle(color: Colors.white70),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
             ),
             Text(
               '${date.day}/${date.month}/${date.year}',
-              style: const TextStyle(color: Colors.white60, fontSize: 12),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 12),
             ),
           ],
         ),
@@ -319,13 +317,13 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.play_arrow, color: Colors.white60),
+              icon: Icon(Icons.play_arrow, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
               onPressed: () {
                 // Play recording
               },
             ),
             IconButton(
-              icon: const Icon(Icons.more_vert, color: Colors.white60),
+              icon: Icon(Icons.more_vert, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
               onPressed: () {
                 // Show options menu
               },
@@ -360,8 +358,8 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
         ),
         title: Text(
           duration,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodyLarge?.color,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -370,11 +368,11 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           children: [
             Text(
               activities,
-              style: const TextStyle(color: Colors.white70),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
             ),
             Text(
               '${date.day}/${date.month}/${date.year}',
-              style: const TextStyle(color: Colors.white60, fontSize: 12),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 12),
             ),
           ],
         ),
@@ -386,7 +384,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E3F),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -399,16 +397,16 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyLarge?.color,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
               fontSize: 12,
             ),
           ),
