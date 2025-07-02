@@ -95,32 +95,33 @@ class _LoginScreenState extends State<LoginScreen> {
                       
                       // Logo and title
                       Container(
-                        width: 80,
-                        height: 80,
                         margin: const EdgeInsets.only(bottom: 32),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: ThemeImage(
-                            lightImagePath: 'assets/tutti.png',
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
-                                  color: const Color(0xFF6366F1),
-                                ),
-                                child: const Icon(
-                                  Icons.music_note,
-                                  size: 40,
-                                  color: Colors.white,
-                                ),
-                              );
-                            },
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.7, // 70% of screen width
+                              maxHeight: 120, // Maximum height for the logo
+                            ),
+                            child: AspectRatio(
+                              aspectRatio: 3.5, // Approximate aspect ratio for horizontal text logo
+                              child: ThemeImage(
+                                lightImagePath: 'assets/tutti.png',
+                                fit: BoxFit.contain, // Changed from cover to contain to prevent cropping
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      color: const Color(0xFF6366F1),
+                                    ),
+                                    child: const Icon(
+                                      Icons.music_note,
+                                      size: 40,
+                                      color: Colors.white,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
                         ),
                       ),

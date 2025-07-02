@@ -238,13 +238,19 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
 
     if (_hapticIntensity > 0) {
       if (isAccent) {
-        if (_hapticIntensity > 50) HapticFeedback.heavyImpact();
-        else HapticFeedback.mediumImpact();
+        if (_hapticIntensity > 50) {
+          HapticFeedback.heavyImpact();
+        } else {
+          HapticFeedback.mediumImpact();
+        }
       } else if (isSubdivision) {
         HapticFeedback.selectionClick();
       } else { // regular beat
-        if (_hapticIntensity > 50) HapticFeedback.mediumImpact();
-        else HapticFeedback.lightImpact();
+        if (_hapticIntensity > 50) {
+          HapticFeedback.mediumImpact();
+        } else {
+          HapticFeedback.lightImpact();
+        }
       }
     }
 
@@ -352,8 +358,11 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
     if (!_isInitialized) return;
 
     if (_hapticIntensity > 0) {
-      if (_hapticIntensity > 50) HapticFeedback.mediumImpact();
-      else HapticFeedback.lightImpact();
+      if (_hapticIntensity > 50) {
+        HapticFeedback.mediumImpact();
+      } else {
+        HapticFeedback.lightImpact();
+      }
     }
 
     try {
