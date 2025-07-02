@@ -422,7 +422,7 @@ class SettingsScreen extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('${tempTempo} BPM', style: const TextStyle(fontSize: 24)),
+              Text('$tempTempo BPM', style: const TextStyle(fontSize: 24)),
               const SizedBox(height: 16),
               Slider(
                 value: tempTempo.toDouble(),

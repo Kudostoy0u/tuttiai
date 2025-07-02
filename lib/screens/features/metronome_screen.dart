@@ -3,6 +3,10 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:just_audio/just_audio.dart';
+import 'dart:typed_data';
+import 'package:tuttiai/widgets/metronome/bpm_display.dart';
+import 'package:tuttiai/widgets/metronome/metronome_controls.dart';
+import 'package:tuttiai/widgets/metronome/visual_metronome.dart';
 
 class MetronomeScreen extends StatefulWidget {
   const MetronomeScreen({super.key});
@@ -14,7 +18,7 @@ class MetronomeScreen extends StatefulWidget {
 class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderStateMixin {
   // State variables
   bool _isPlaying = false;
-  final bool _isInitialized = true; // Always initialized since no audio loading needed
+  bool _isInitialized = false;
   int _bpm = 120;
   int _timeSignature = 4;
   int _currentBeat = 0;
@@ -44,27 +48,30 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
 
   final List<Map<String, dynamic>> _accentPatterns = [
     {'name': 'None', 'pattern': []},
+    {'name': 'First Beat', 'pattern': []},
     {'name': 'Strong-Weak', 'pattern': [true, false]},
     {'name': 'Waltz', 'pattern': [true, false, false]},
     {'name': 'March', 'pattern': [true, false, true, false]},
     {'name': 'Complex', 'pattern': [true, false, true, false, false, true]},
-    {'name': 'First Beat', 'pattern': []},
   ];
 
-  String _selectedAccentPattern = 'Strong-Weak';
+  String _selectedAccentPattern = 'None';
 
-  // Audio players for ticks
-  late AudioPlayer _tickPlayer;
+  // --- Custom Audio Generation ---
   late AudioPlayer _accentPlayer;
+  late AudioPlayer _tickPlayer;
+  late List<AudioPlayer> _subdivisionPlayers;
+  int _subdivisionPlayerIndex = 0;
+  double _audioVolume = 100.0;
+  double _hapticIntensity = 100.0;
+  // --- End Custom Audio Generation ---
 
   @override
   void initState() {
     super.initState();
     
-    // Initialize audio players and preload assets
-    _tickPlayer = AudioPlayer();
-    _accentPlayer = AudioPlayer();
-    _loadAudio();
+    // Sound system is ready - using SystemSound for immediate playback
+    _initializeAudio();
     
     _beatController = AnimationController(
       duration: const Duration(milliseconds: 100),
@@ -80,14 +87,101 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
     );
   }
 
-  // Preload audio assets
-  Future<void> _loadAudio() async {
-    try {
-      await _tickPlayer.setAsset('assets/audio/tick.wav');
-      await _accentPlayer.setAsset('assets/audio/accent.wav');
-    } catch (_) {
-      // Ignore loading errors for now
+  Future<void> _initializeAudio() async {
+    _accentPlayer = AudioPlayer();
+    _tickPlayer = AudioPlayer();
+    _subdivisionPlayers = List.generate(4, (_) => AudioPlayer());
+
+    final accentPcm = _generateTone(1200, 0.05);
+    final tickPcm = _generateTone(880, 0.05);
+    final subdivisionPcm = _generateTone(660, 0.05, 0.5);
+
+    final subdivisionSource = MyCustomSource(_addWavHeader(subdivisionPcm));
+
+    await _accentPlayer.setAudioSource(MyCustomSource(_addWavHeader(accentPcm)));
+    await _tickPlayer.setAudioSource(MyCustomSource(_addWavHeader(tickPcm)));
+    for (final player in _subdivisionPlayers) {
+      await player.setAudioSource(subdivisionSource);
     }
+
+    _updateAllVolumes(_audioVolume / 100.0);
+
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
+    }
+  }
+
+  void _updateAllVolumes(double volume) {
+    _accentPlayer.setVolume(volume);
+    _tickPlayer.setVolume(volume);
+    for (final player in _subdivisionPlayers) {
+      player.setVolume(volume);
+    }
+  }
+
+  Uint8List _addWavHeader(Uint8List pcm) {
+    final int pcmLength = pcm.length;
+    final int sampleRate = 44100;
+    final int numChannels = 1;
+    final int bitsPerSample = 16;
+    final int byteRate = sampleRate * numChannels * (bitsPerSample ~/ 8);
+    final int blockAlign = numChannels * (bitsPerSample ~/ 8);
+    final int chunkSize = 36 + pcmLength;
+
+    final ByteData header = ByteData(44);
+    header.setUint8(0, 0x52); // 'R'
+    header.setUint8(1, 0x49); // 'I'
+    header.setUint8(2, 0x46); // 'F'
+    header.setUint8(3, 0x46); // 'F'
+    header.setUint32(4, chunkSize, Endian.little);
+    header.setUint8(8, 0x57); // 'W'
+    header.setUint8(9, 0x41); // 'A'
+    header.setUint8(10, 0x56); // 'V'
+    header.setUint8(11, 0x45); // 'E'
+    header.setUint8(12, 0x66); // 'f'
+    header.setUint8(13, 0x6D); // 'm'
+    header.setUint8(14, 0x74); // 't'
+    header.setUint8(15, 0x20); // ' '
+    header.setUint32(16, 16, Endian.little); // Subchunk1Size for PCM
+    header.setUint16(20, 1, Endian.little); // AudioFormat - 1 for PCM
+    header.setUint16(22, numChannels, Endian.little);
+    header.setUint32(24, sampleRate, Endian.little);
+    header.setUint32(28, byteRate, Endian.little);
+    header.setUint16(32, blockAlign, Endian.little);
+    header.setUint16(34, bitsPerSample, Endian.little);
+    header.setUint8(36, 0x64); // 'd'
+    header.setUint8(37, 0x61); // 'a'
+    header.setUint8(38, 0x74); // 't'
+    header.setUint8(39, 0x61); // 'a'
+    header.setUint32(40, pcmLength, Endian.little);
+
+    final builder = BytesBuilder(copy: false);
+    builder.add(header.buffer.asUint8List());
+    builder.add(pcm);
+    return builder.takeBytes();
+  }
+
+  Uint8List _generateTone(double frequency, double duration, [double amplitude = 1.0]) {
+    const int sampleRate = 44100;
+    final int frameCount = (sampleRate * duration).round();
+    final Float32List buffer = Float32List(frameCount);
+    final double twoPi = math.pi * 2;
+
+    for (int i = 0; i < frameCount; i++) {
+      final double t = i / sampleRate;
+      final double envelope = math.pow(1 - (t / duration), 2.0).toDouble();
+      buffer[i] = math.sin(twoPi * frequency * t) * envelope * amplitude;
+    }
+
+    final Uint8List pcm = Uint8List(frameCount * 2);
+    for (int i = 0; i < frameCount; i++) {
+      final int sample = (buffer[i] * 32767).round().clamp(-32768, 32767);
+      pcm[i * 2] = sample & 0xFF;
+      pcm[i * 2 + 1] = (sample >> 8) & 0xFF;
+    }
+    return pcm;
   }
 
   void _startMetronome() {
@@ -117,17 +211,10 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
         final beatNumber = (_currentBeat ~/ _subdivision) % _timeSignature;
         final isAccent = _shouldAccent(beatNumber);
         
-        _playSound(isAccent: isAccent);
-        
-        if (isAccent) {
-          HapticFeedback.heavyImpact();
-        } else {
-          HapticFeedback.lightImpact();
-        }
+        _playSound(isAccent: isAccent, isSubdivision: false);
       } else {
         // Subdivision beat
-        _playSound(isAccent: false);
-        HapticFeedback.selectionClick();
+        _playSound(isAccent: false, isSubdivision: true);
       }
     });
   }
@@ -146,14 +233,36 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
     }
   }
 
-  void _playSound({required bool isAccent}) {
-    final player = isAccent ? _accentPlayer : _tickPlayer;
+  void _playSound({required bool isAccent, bool isSubdivision = false}) {
+    final AudioPlayer player;
+
+    if (_hapticIntensity > 0) {
+      if (isAccent) {
+        if (_hapticIntensity > 50) HapticFeedback.heavyImpact();
+        else HapticFeedback.mediumImpact();
+      } else if (isSubdivision) {
+        HapticFeedback.selectionClick();
+      } else { // regular beat
+        if (_hapticIntensity > 50) HapticFeedback.mediumImpact();
+        else HapticFeedback.lightImpact();
+      }
+    }
+
+    if (isAccent) {
+      player = _accentPlayer;
+    } else if (isSubdivision) {
+      player = _subdivisionPlayers[_subdivisionPlayerIndex];
+      _subdivisionPlayerIndex = (_subdivisionPlayerIndex + 1) % _subdivisionPlayers.length;
+    } else {
+      player = _tickPlayer;
+    }
+
     try {
       player.seek(Duration.zero);
-      if (!player.playing) {
-        player.play();
-      }
-    } catch (_) {}
+      player.play();
+    } catch (_) {
+      // Ignore player errors
+    }
   }
 
   @override
@@ -167,13 +276,17 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
     _beatController.dispose();
     _pendulumController.dispose();
     _visualBeatController.dispose();
-    _tickPlayer.dispose();
     _accentPlayer.dispose();
+    _tickPlayer.dispose();
+    for (final player in _subdivisionPlayers) {
+      player.dispose();
+    }
+    
     super.dispose();
   }
 
   void _toggleMetronome() {
-    if (!mounted) return;
+    if (!mounted || !_isInitialized) return;
     setState(() {
       _isPlaying = !_isPlaying;
     });
@@ -236,6 +349,20 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
   }
 
   void _tapTempo() {
+    if (!_isInitialized) return;
+
+    if (_hapticIntensity > 0) {
+      if (_hapticIntensity > 50) HapticFeedback.mediumImpact();
+      else HapticFeedback.lightImpact();
+    }
+
+    try {
+      _tickPlayer.seek(Duration.zero);
+      _tickPlayer.play();
+    } catch (_) {
+      // Ignore player errors
+    }
+
     final now = DateTime.now();
     _tapTimes.add(now);
     
@@ -296,7 +423,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
         actions: [
           IconButton(
             icon: const Icon(Icons.touch_app),
-            onPressed: _tapTempo,
+            onPressed: _isInitialized ? _tapTempo : null,
             tooltip: 'Tap Tempo',
           ),
         ],
@@ -306,515 +433,92 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
         child: Column(
           children: [
             // BPM Display
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          _bpm.toString(),
-                          style: const TextStyle(
-                            fontSize: 64,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'BPM',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD97706).withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        _getTempoMarking(),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFFD97706),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            BpmDisplay(
+              bpm: _bpm,
+              tempoMarking: _getTempoMarking(),
             ),
             const SizedBox(height: 20),
-            
-            // Visual metronome with enhanced pendulum
-            Stack(
-              children: [
-                Card(
-                  child: Container(
-                    width: double.infinity,
-                    height: 280, // Fixed height to prevent overflow
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Enhanced pendulum with base
-                        Stack(
-                          alignment: Alignment.bottomCenter,
-                          children: [
-                            // Pendulum base
-                            Container(
-                              width: 50,
-                              height: 16,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF374151),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            // Pendulum rod and bob
-                            AnimatedBuilder(
-                              animation: _pendulumController,
-                              builder: (context, child) {
-                                final angle = _isPlaying 
-                                  ? math.sin(_pendulumController.value * 2 * math.pi) * 0.5
-                                  : 0.0;
-                                return Transform.rotate(
-                                  angle: angle,
-                                  alignment: Alignment.bottomCenter,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      // Pendulum bob
-                                      AnimatedBuilder(
-                                        animation: _visualBeatController,
-                                        builder: (context, child) {
-                                          final scale = 1.0 + _visualBeatController.value * 0.2;
-                                          return Transform.scale(
-                                            scale: scale,
-                                            child: Container(
-                                              width: 20,
-                                              height: 20,
-                                              decoration: BoxDecoration(
-                                                color: _isPlaying 
-                                                  ? const Color(0xFFD97706)
-                                                  : const Color(0xFF6B7280),
-                                                shape: BoxShape.circle,
-                                                boxShadow: _isPlaying ? [
-                                                  BoxShadow(
-                                                    color: const Color(0xFFD97706).withOpacity(0.3),
-                                                    blurRadius: 6,
-                                                    spreadRadius: 1,
-                                                  ),
-                                                ] : null,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                      // Pendulum rod
-                                      Container(
-                                        width: 3,
-                                        height: 100,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF6B7280),
-                                          borderRadius: BorderRadius.circular(2),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        
-                        // Enhanced beat indicators with subdivisions
-                        Column(
-                          children: [
-                            // Main beats
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: List.generate(_timeSignature, (index) {
-                                  return AnimatedBuilder(
-                                    animation: _beatController,
-                                    builder: (context, child) {
-                                      final currentMainBeat = (_currentBeat ~/ _subdivision) % _timeSignature;
-                                      final isCurrentBeat = index == currentMainBeat;
-                                      final isAccent = _shouldAccent(index);
-                                      
-                                      return Container(
-                                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: isCurrentBeat
-                                              ? (isAccent ? const Color(0xFF6366F1) : const Color(0xFFD97706))
-                                                  .withOpacity(1.0 - _beatController.value * 0.3)
-                                              : Colors.white.withOpacity(0.1),
-                                          border: Border.all(
-                                            color: isAccent ? const Color(0xFF6366F1) : const Color(0xFFD97706),
-                                            width: isAccent ? 2 : 1,
-                                          ),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            '${index + 1}',
-                                            style: TextStyle(
-                                              color: isCurrentBeat 
-                                                ? Theme.of(context).textTheme.bodyLarge?.color 
-                                                : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
-                                              fontSize: isAccent ? 16 : 14,
-                                              fontWeight: isAccent ? FontWeight.bold : FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                }),
-                              ),
-                            ),
-                            
-                            // Subdivision indicators
-                            if (_subdivision > 1) ...[
-                              const SizedBox(height: 12),
-                              SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: List.generate(_subdivision * _timeSignature, (index) {
-                                    return AnimatedBuilder(
-                                      animation: _visualBeatController,
-                                      builder: (context, child) {
-                                        final isCurrentSubdivision = index == _currentBeat;
-                                        final scale = isCurrentSubdivision 
-                                          ? 1.0 + _visualBeatController.value * 0.5
-                                          : 1.0;
-                                        
-                                        return Transform.scale(
-                                          scale: scale,
-                                          child: Container(
-                                            margin: const EdgeInsets.symmetric(horizontal: 2),
-                                            width: 6,
-                                            height: 6,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: isCurrentSubdivision
-                                                  ? const Color(0xFFD97706)
-                                                  : Colors.white.withOpacity(0.3),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  }),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Floating play/pause button overlay
-                Positioned(
-                  top: 16,
-                  right: 16,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: _isPlaying ? Colors.red : const Color(0xFFD97706),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      onPressed: _toggleMetronome,
-                      icon: Icon(
-                        _isPlaying ? Icons.pause : Icons.play_arrow,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            VisualMetronome(
+              isPlaying: _isPlaying,
+              isInitialized: _isInitialized,
+              pendulumController: _pendulumController,
+              visualBeatController: _visualBeatController,
+              beatController: _beatController,
+              timeSignature: _timeSignature,
+              currentBeat: _currentBeat,
+              subdivision: _subdivision,
+              shouldAccent: _shouldAccent,
+              toggleMetronome: _toggleMetronome,
             ),
             const SizedBox(height: 16),
-            
-            // BPM controls
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        IconButton(
-                          onPressed: () => _updateBpm(_bpm - 1),
-                          icon: Icon(Icons.remove, color: Theme.of(context).iconTheme.color),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.1),
-                          ),
-                        ),
-                        Expanded(
-                          child: Slider(
-                            value: _bpm.toDouble(),
-                            min: 40,
-                            max: 300,
-                            divisions: 260,
-                            activeColor: const Color(0xFFD97706),
-                            inactiveColor: Colors.white.withOpacity(0.3),
-                            onChanged: (value) => _updateBpm(value.round()),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => _updateBpm(_bpm + 1),
-                          icon: Icon(Icons.add, color: Theme.of(context).iconTheme.color),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.1),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    
-                    // Common BPM presets
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: _commonBpms.map((bpm) {
-                        return GestureDetector(
-                          onTap: () => _updateBpm(bpm),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: bpm == _bpm ? const Color(0xFFD97706) : Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              bpm.toString(),
-                              style: TextStyle(
-                                color: bpm == _bpm ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
-                                fontSize: 10,
-                                fontWeight: bpm == _bpm ? FontWeight.bold : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            
+            BpmControls(bpm: _bpm, onBpmChanged: _updateBpm),
             const SizedBox(height: 16),
-            
-            // Subdivision selector
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Note Subdivision',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        {'value': 1, 'label': '♩'},
-                        {'value': 2, 'label': '♫'},
-                        {'value': 4, 'label': '♬'},
-                      ].map((subdivision) {
-                        final value = subdivision['value'] as int;
-                        final label = subdivision['label'] as String;
-                        final isSelected = value == _subdivision;
-                        return GestureDetector(
-                          onTap: () {
-                            if (!mounted) return;
-                            setState(() {
-                              _subdivision = value;
-                              _currentBeat = 0;
-                            });
-                            
-                            // Restart metronome if playing to apply new subdivision
-                            if (_isPlaying) {
-                              _startMetronome();
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              label,
-                              style: TextStyle(
-                                color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
-                                fontSize: 20,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
+            SubdivisionControls(
+              subdivision: _subdivision,
+              onSubdivisionChanged: (value) {
+                if (!mounted) return;
+                setState(() {
+                  _subdivision = value;
+                  _currentBeat = 0;
+                });
+                if (_isPlaying) {
+                  _startMetronome();
+                }
+              },
             ),
             const SizedBox(height: 12),
-            
-            // Time signature and accent pattern
-            IntrinsicHeight(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          children: [
-                            const Text(
-                              'Time Signature',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            SizedBox(
-                              height: 60, // Reduced height to shrink card
-                              child: GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 4,
-                                  mainAxisSpacing: 4,
-                                  crossAxisSpacing: 4,
-                                  childAspectRatio: 1.2,
-                                ),
-                                itemCount: 8,
-                                itemBuilder: (context, index) {
-                                  final timeSignatures = [
-                                    {'beats': 2, 'note': 4, 'display': '2/4'},
-                                    {'beats': 3, 'note': 4, 'display': '3/4'},
-                                    {'beats': 4, 'note': 4, 'display': '4/4'},
-                                    {'beats': 5, 'note': 4, 'display': '5/4'},
-                                    {'beats': 6, 'note': 4, 'display': '6/4'},
-                                    {'beats': 3, 'note': 8, 'display': '3/8'},
-                                    {'beats': 6, 'note': 8, 'display': '6/8'},
-                                    {'beats': 12, 'note': 8, 'display': '12/8'},
-                                  ];
-                                  
-                                  final timeSignature = timeSignatures[index];
-                                  final beats = timeSignature['beats'] as int;
-                                  final display = timeSignature['display'] as String;
-                                  final isSelected = beats == _timeSignature;
-                                  
-                                  return GestureDetector(
-                                    onTap: () => _updateTimeSignature(beats),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          display,
-                                          style: TextStyle(
-                                            color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
-                                            fontSize: 10,
-                                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          children: [
-                            const Text(
-                              'Accent Pattern',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            DropdownButton<String>(
-                              alignment: Alignment.center,
-                              value: _selectedAccentPattern,
-                              onChanged: (String? newValue) {
-                                if (newValue != null) {
-                                  if (!mounted) return;
-                                  setState(() {
-                                    _selectedAccentPattern = newValue;
-                                  });
-                                }
-                              },
-                              dropdownColor: const Color(0xFF1E1E3F),
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                              underline: Container(),
-                              items: _accentPatterns.map<DropdownMenuItem<String>>((pattern) {
-                                return DropdownMenuItem<String>(
-                                  value: pattern['name'],
-                                  child: Text(
-                                    pattern['name'],
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            TimeAccentControls(
+              timeSignature: _timeSignature,
+              selectedAccentPattern: _selectedAccentPattern,
+              accentPatterns: _accentPatterns,
+              onTimeSignatureChanged: _updateTimeSignature,
+              onAccentPatternChanged: (newValue) {
+                if (newValue != null) {
+                  if (!mounted) return;
+                  setState(() {
+                    _selectedAccentPattern = newValue;
+                  });
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+            FeedbackControls(
+              audioVolume: _audioVolume,
+              hapticIntensity: _hapticIntensity,
+              onAudioVolumeChanged: (value) {
+                setState(() {
+                  _audioVolume = value;
+                });
+                _updateAllVolumes(value / 100.0);
+              },
+              onHapticIntensityChanged: (value) {
+                setState(() {
+                  _hapticIntensity = value;
+                });
+              },
             ),
             const SizedBox(height: 12),
           ],
         ),
       ),
+    );
+  }
+}
+
+class MyCustomSource extends StreamAudioSource {
+  final Uint8List bytes;
+  MyCustomSource(this.bytes);
+
+  @override
+  Future<StreamAudioResponse> request([int? start, int? end]) async {
+    start ??= 0;
+    end ??= bytes.length;
+    return StreamAudioResponse(
+      sourceLength: bytes.length,
+      contentLength: end - start,
+      offset: start,
+      stream: Stream.value(bytes.sublist(start, end)),
+      contentType: 'audio/wav',
     );
   }
 } 

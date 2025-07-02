@@ -117,7 +117,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
         height: MediaQuery.of(context).size.height * 0.8,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E3F),
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -125,8 +125,8 @@ class _OnboardingModalState extends State<OnboardingModal> {
             // Progress indicator
             LinearProgressIndicator(
               value: (_currentPage + 1) / 6,
-              backgroundColor: Colors.white.withOpacity(0.2),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+              backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
             ),
             const SizedBox(height: 24),
             
@@ -156,15 +156,17 @@ class _OnboardingModalState extends State<OnboardingModal> {
                   child: Text(
                     'Back',
                     style: TextStyle(
-                      color: _currentPage > 0 ? Colors.white70 : Colors.transparent,
+                      color: _currentPage > 0
+                          ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7)
+                          : Colors.transparent,
                     ),
                   ),
                 ),
                 ElevatedButton(
                   onPressed: _canProceed() ? _nextPage : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1),
-                    foregroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                   ),
                   child: Text(_currentPage == 5 ? 'Complete' : 'Next'),
@@ -193,17 +195,17 @@ class _OnboardingModalState extends State<OnboardingModal> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(
+        Icon(
           Icons.music_note,
           size: 80,
-          color: Color(0xFF6366F1),
+          color: Theme.of(context).colorScheme.primary,
         ),
         const SizedBox(height: 24),
         Text(
           'Welcome to Tutti!',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           textAlign: TextAlign.center,
         ),
@@ -211,7 +213,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
         Text(
           'Let\'s personalize your musical experience. We\'ll ask you a few questions to better understand your musical journey.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Colors.white70,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
           ),
           textAlign: TextAlign.center,
         ),
@@ -227,7 +229,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
           'What instrument do you play?',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 24),
@@ -248,10 +250,12 @@ class _OnboardingModalState extends State<OnboardingModal> {
                 onTap: () => setState(() => _selectedInstrument = instrument),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.surface.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? const Color(0xFF6366F1) : Colors.transparent,
+                      color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
                       width: 2,
                     ),
                   ),
@@ -260,14 +264,16 @@ class _OnboardingModalState extends State<OnboardingModal> {
                     children: [
                       Icon(
                         _instrumentIcons[instrument] ?? Icons.music_note,
-                        color: isSelected ? Colors.white : Colors.white70,
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                         size: 24,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         instrument,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                           fontSize: 12,
                         ),
@@ -292,7 +298,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
           'What\'s your skill level?',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 24),
@@ -307,20 +313,26 @@ class _OnboardingModalState extends State<OnboardingModal> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.surface.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                          color: Colors.white,
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.onPrimary
+                              : Theme.of(context).colorScheme.onSurface,
                         ),
                         const SizedBox(width: 12),
                         Text(
                           level,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Theme.of(context).colorScheme.onSurface,
                             fontSize: 16,
                           ),
                         ),
@@ -344,13 +356,13 @@ class _OnboardingModalState extends State<OnboardingModal> {
           'What genres do you enjoy?',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           'Select all that apply',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
         ),
         const SizedBox(height: 24),
         Expanded(
@@ -378,14 +390,18 @@ class _OnboardingModalState extends State<OnboardingModal> {
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.surface.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
                     child: Text(
                       genre,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Theme.of(context).colorScheme.onSurface,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                       ),
                     ),
@@ -407,7 +423,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
           'How often do you practice?',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 24),
@@ -423,20 +439,26 @@ class _OnboardingModalState extends State<OnboardingModal> {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.surface.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
                           Icon(
                             isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                            color: Colors.white,
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Theme.of(context).colorScheme.onSurface,
                           ),
                           const SizedBox(width: 12),
                           Text(
                             frequency,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Theme.of(context).colorScheme.onSurface,
                               fontSize: 16,
                             ),
                           ),
@@ -452,20 +474,26 @@ class _OnboardingModalState extends State<OnboardingModal> {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: _hasTeacher ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
+                    color: _hasTeacher
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.surface.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
                       Icon(
                         _hasTeacher ? Icons.check_box : Icons.check_box_outline_blank,
-                        color: Colors.white,
+                        color: _hasTeacher
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Theme.of(context).colorScheme.onSurface,
                       ),
                       const SizedBox(width: 12),
-                      const Text(
+                      Text(
                         'I have a music teacher',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: _hasTeacher
+                              ? Theme.of(context).colorScheme.onPrimary
+                              : Theme.of(context).colorScheme.onSurface,
                           fontSize: 16,
                         ),
                       ),
@@ -488,13 +516,13 @@ class _OnboardingModalState extends State<OnboardingModal> {
           'What are your musical goals?',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           'Select all that apply',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
         ),
         const SizedBox(height: 24),
         Expanded(
@@ -519,21 +547,27 @@ class _OnboardingModalState extends State<OnboardingModal> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFF6366F1) : Colors.white.withOpacity(0.1),
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.surface.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           isSelected ? Icons.check_box : Icons.check_box_outline_blank,
-                          color: Colors.white,
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.onPrimary
+                              : Theme.of(context).colorScheme.onSurface,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             goal,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Theme.of(context).colorScheme.onSurface,
                               fontSize: 16,
                             ),
                           ),

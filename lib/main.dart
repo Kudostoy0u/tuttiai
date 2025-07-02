@@ -22,6 +22,84 @@ class TuttiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Define a consistent color scheme for light and dark modes
+    const primaryColor = Color(0xFF6366F1);
+    const secondaryColor = Color(0xFFD97706);
+
+    // Light Theme
+    final lightTheme = ThemeData(
+      brightness: Brightness.light,
+      primaryColor: primaryColor,
+      scaffoldBackgroundColor: const Color(0xFFF9FAFB),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFFF9FAFB),
+        elevation: 0,
+        foregroundColor: Colors.black,
+        titleTextStyle: TextStyle(
+          color: Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
+        iconTheme: IconThemeData(color: Colors.black),
+      ),
+      cardTheme: CardThemeData(
+        color: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Colors.grey.shade200),
+        ),
+      ),
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryColor,
+        brightness: Brightness.light,
+        primary: primaryColor,
+        secondary: secondaryColor,
+        background: const Color(0xFFF9FAFB),
+        onBackground: Colors.black,
+        surface: Colors.white,
+        onSurface: Colors.black,
+      ),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
+      iconTheme: const IconThemeData(color: Colors.black54),
+    );
+
+    // Dark Theme
+    final darkTheme = ThemeData(
+      brightness: Brightness.dark,
+      primaryColor: primaryColor,
+      scaffoldBackgroundColor: const Color(0xFF0F0F23),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF0F0F23),
+        elevation: 0,
+        foregroundColor: Colors.white,
+        titleTextStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      cardTheme: CardThemeData(
+        color: const Color(0xFF1E1E3F),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryColor,
+        brightness: Brightness.dark,
+        primary: primaryColor,
+        secondary: secondaryColor,
+        background: const Color(0xFF0F0F23),
+        onBackground: Colors.white,
+        surface: const Color(0xFF1E1E3F),
+        onSurface: Colors.white,
+      ),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+      iconTheme: const IconThemeData(color: Colors.white70),
+    );
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
@@ -32,72 +110,9 @@ class TuttiApp extends StatelessWidget {
           return MaterialApp(
             title: 'Tutti',
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: const Color(0xFF6366F1),
-                brightness: settings.isDarkMode ? Brightness.dark : Brightness.light,
-              ),
-              textTheme: GoogleFonts.interTextTheme(
-                settings.isDarkMode
-                    ? const TextTheme(
-                        bodyLarge: TextStyle(color: Colors.white),
-                        bodyMedium: TextStyle(color: Colors.white),
-                        bodySmall: TextStyle(color: Colors.white),
-                        headlineLarge: TextStyle(color: Colors.white),
-                        headlineMedium: TextStyle(color: Colors.white),
-                        headlineSmall: TextStyle(color: Colors.white),
-                        titleLarge: TextStyle(color: Colors.white),
-                        titleMedium: TextStyle(color: Colors.white),
-                        titleSmall: TextStyle(color: Colors.white),
-                        labelLarge: TextStyle(color: Colors.white),
-                        labelMedium: TextStyle(color: Colors.white),
-                        labelSmall: TextStyle(color: Colors.white),
-                      )
-                    : const TextTheme(
-                        bodyLarge: TextStyle(color: Colors.black87),
-                        bodyMedium: TextStyle(color: Colors.black87),
-                        bodySmall: TextStyle(color: Colors.black87),
-                        headlineLarge: TextStyle(color: Colors.black87),
-                        headlineMedium: TextStyle(color: Colors.black87),
-                        headlineSmall: TextStyle(color: Colors.black87),
-                        titleLarge: TextStyle(color: Colors.black87),
-                        titleMedium: TextStyle(color: Colors.black87),
-                        titleSmall: TextStyle(color: Colors.black87),
-                        labelLarge: TextStyle(color: Colors.black87),
-                        labelMedium: TextStyle(color: Colors.black87),
-                        labelSmall: TextStyle(color: Colors.black87),
-                      ),
-              ),
-              scaffoldBackgroundColor: settings.isDarkMode 
-                  ? const Color(0xFF0F0F23) 
-                  : Colors.grey[50],
-              appBarTheme: AppBarTheme(
-                backgroundColor: settings.isDarkMode 
-                    ? const Color(0xFF0F0F23) 
-                    : Colors.white,
-                elevation: 0,
-                foregroundColor: settings.isDarkMode ? Colors.white : Colors.black,
-                titleTextStyle: TextStyle(
-                  color: settings.isDarkMode ? Colors.white : Colors.black,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-                iconTheme: IconThemeData(
-                  color: settings.isDarkMode ? Colors.white : Colors.black,
-                ),
-              ),
-              cardTheme: CardThemeData(
-                color: settings.isDarkMode 
-                    ? const Color(0xFF1E1E3F) 
-                    : Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              iconTheme: IconThemeData(
-                color: settings.isDarkMode ? Colors.white70 : Colors.black54,
-              ),
-            ),
+            theme: lightTheme,
+            darkTheme: darkTheme,
+            themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
             home: const AppWrapper(),
           );
         },
