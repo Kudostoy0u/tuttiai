@@ -9,14 +9,14 @@ import 'dart:convert';
 
 enum RecordState { stop, record, pause }
 
-class RecordingLibraryScreen extends StatefulWidget {
-  const RecordingLibraryScreen({super.key});
+class RecordingAnalyzerScreen extends StatefulWidget {
+  const RecordingAnalyzerScreen({super.key});
 
   @override
-  State<RecordingLibraryScreen> createState() => _RecordingLibraryScreenState();
+  State<RecordingAnalyzerScreen> createState() => _RecordingAnalyzerScreenState();
 }
 
-class _RecordingLibraryScreenState extends State<RecordingLibraryScreen> with TickerProviderStateMixin {
+class _RecordingAnalyzerScreenState extends State<RecordingAnalyzerScreen> with TickerProviderStateMixin {
   final AudioRecorder _recorder = AudioRecorder();
   final AudioPlayer _player = AudioPlayer();
   
@@ -272,7 +272,7 @@ class _RecordingLibraryScreenState extends State<RecordingLibraryScreen> with Ti
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Recordings',
+          'Recording Analyzer',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         leading: IconButton(

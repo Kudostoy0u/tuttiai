@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../features/sheet_music_screen.dart';
 import '../features/tuning_screen.dart';
-import '../features/intonation_screen.dart';
+import '../features/listen_screen.dart';
 import '../features/metronome_screen.dart';
-import '../features/recording_library_screen.dart';
+import '../features/recording_analyzer_screen.dart';
+import '../features/community_videos_screen.dart';
 import '../../widgets/theme_image.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -108,24 +109,24 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 _buildFeatureCard(
                   context,
-                  'Tuning',
-                  Icons.tune,
-                  const Color(0xFF059669),
-                  'Tune your instrument with precision',
+                  'Recording\nAnalyzer',
+                  Icons.mic,
+                  const Color(0xFF7C3AED),
+                  'Record and analyze your practice sessions.',
                   () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const TuningScreen()),
+                    MaterialPageRoute(builder: (context) => const RecordingAnalyzerScreen()),
                   ),
                 ),
                 _buildFeatureCard(
                   context,
-                  'Intonation\nChecker',
-                  Icons.graphic_eq,
+                  'Listen',
+                  Icons.headphones,
                   const Color(0xFFDC2626),
-                  'Check pitch accuracy',
+                  'Hear pieces or play with accompaniment',
                   () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const IntonationScreen()),
+                    MaterialPageRoute(builder: (context) => const ListenScreen()),
                   ),
                 ),
                 _buildFeatureCard(
@@ -141,13 +142,24 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 _buildFeatureCard(
                   context,
-                  'Recording\nLibrary',
-                  Icons.mic,
-                  const Color(0xFF7C3AED),
-                  'Record practice sessions',
+                  'Tuning',
+                  Icons.tune,
+                  const Color(0xFF059669),
+                  'Tune your instrument with precision',
                   () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const RecordingLibraryScreen()),
+                    MaterialPageRoute(builder: (context) => const TuningScreen()),
+                  ),
+                ),
+                _buildFeatureCard(
+                  context,
+                  'Community\nVideos',
+                  Icons.people,
+                  const Color(0xFFEC4899),
+                  'Get feedback from the community',
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CommunityVideosScreen()),
                   ),
                 ),
               ]),

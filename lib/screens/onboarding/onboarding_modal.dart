@@ -266,14 +266,16 @@ class _OnboardingModalState extends State<OnboardingModal> {
                         _instrumentIcons[instrument] ?? Icons.music_note,
                         color: isSelected
                             ? Theme.of(context).colorScheme.onPrimary
-                            : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                            : Theme.of(context).colorScheme.onSurface,
                         size: 24,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         instrument,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
+                          color: isSelected
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Theme.of(context).colorScheme.onSurface,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                           fontSize: 12,
                         ),
