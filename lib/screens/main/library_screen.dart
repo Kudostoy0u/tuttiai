@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../services/localization_service.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -24,11 +27,12 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final settings = Provider.of<SettingsProvider>(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Library',
-          style: TextStyle(
+        title: Text(
+          LocalizationService.translate('library', settings.language),
+          style: const TextStyle(
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -37,10 +41,10 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           indicatorColor: const Color(0xFF6366F1),
           labelColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
           unselectedLabelColor: Theme.of(context).brightness == Brightness.dark ? Colors.white60 : Colors.black54,
-          tabs: const [
-            Tab(text: 'Sheet Music'),
-            Tab(text: 'Recordings'),
-            Tab(text: 'Practice Log'),
+          tabs: [
+            Tab(text: LocalizationService.translate('sheet_music_tab', settings.language)),
+            Tab(text: LocalizationService.translate('recordings_tab', settings.language)),
+            Tab(text: LocalizationService.translate('practice_log_tab', settings.language)),
           ],
         ),
       ),
@@ -56,6 +60,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
   }
 
   Widget _buildSheetMusicTab() {
+    final settings = Provider.of<SettingsProvider>(context);
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -64,11 +69,11 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           TextField(
             style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
             decoration: InputDecoration(
-              hintText: 'Search sheet music...',
-              hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
-              prefixIcon: Icon(Icons.search, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+              hintText: LocalizationService.translate('search_sheet_music', settings.language),
+              hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153)),
+              prefixIcon: Icon(Icons.search, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153)),
               filled: true,
-              fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
+              fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(26),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -82,11 +87,11 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildFilterChip('All', true),
-                _buildFilterChip('Favorites', false),
-                _buildFilterChip('Recently Added', false),
-                _buildFilterChip('Classical', false),
-                _buildFilterChip('Jazz', false),
+                _buildFilterChip(LocalizationService.translate('all', settings.language), true),
+                _buildFilterChip(LocalizationService.translate('favorites', settings.language), false),
+                _buildFilterChip(LocalizationService.translate('recently_added', settings.language), false),
+                _buildFilterChip(LocalizationService.translate('classical', settings.language), false),
+                _buildFilterChip(LocalizationService.translate('jazz', settings.language), false),
               ],
             ),
           ),
@@ -112,6 +117,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
   }
 
   Widget _buildRecordingsTab() {
+    final settings = Provider.of<SettingsProvider>(context);
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -123,11 +129,11 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
                 child: TextField(
                   style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                   decoration: InputDecoration(
-                    hintText: 'Search recordings...',
-                    hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
-                    prefixIcon: Icon(Icons.search, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+                    hintText: LocalizationService.translate('search_recordings', settings.language),
+                    hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153)),
+                    prefixIcon: Icon(Icons.search, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153)),
                     filled: true,
-                    fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
+                    fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(26),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
@@ -140,7 +146,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
                 onPressed: () {
                   // Show date picker
                 },
-                icon: Icon(Icons.calendar_today, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+                icon: Icon(Icons.calendar_today, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153)),
               ),
             ],
           ),
@@ -165,6 +171,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
   }
 
   Widget _buildPracticeLogTab() {
+    final settings = Provider.of<SettingsProvider>(context);
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -173,11 +180,19 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           Row(
             children: [
               Expanded(
-                child: _buildStatCard('This Week', '5 hrs 30 min', Icons.timer),
+                child: _buildStatCard(
+                  LocalizationService.translate('this_week', settings.language),
+                  '5 ${LocalizationService.translate('hrs', settings.language)} 30 ${LocalizationService.translate('min_unit', settings.language)}',
+                  Icons.timer,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildStatCard('Streak', '12 days', Icons.local_fire_department),
+                child: _buildStatCard(
+                  LocalizationService.translate('streak', settings.language),
+                  '12 ${LocalizationService.translate('days_unit', settings.language)}',
+                  Icons.local_fire_department,
+                ),
               ),
             ],
           ),
@@ -210,10 +225,10 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
         onSelected: (value) {
           // Handle filter selection
         },
-        backgroundColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
+        backgroundColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(26),
         selectedColor: const Color(0xFF6366F1),
         labelStyle: TextStyle(
-          color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+          color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179),
         ),
         checkmarkColor: Colors.white,
       ),
@@ -228,7 +243,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: const Color(0xFF6366F1).withOpacity(0.2),
+            color: const Color(0xFF6366F1).withAlpha(51),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(
@@ -248,27 +263,27 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           children: [
             Text(
               composer,
-              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
             ),
             const SizedBox(height: 4),
             Row(
               children: [
                 Text(
                   genre,
-                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 12),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153), fontSize: 12),
                 ),
                 const SizedBox(width: 8),
                 Icon(Icons.star, size: 16, color: Colors.amber),
                 Text(
                   rating.toString(),
-                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 12),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153), fontSize: 12),
                 ),
               ],
             ),
           ],
         ),
         trailing: IconButton(
-          icon: Icon(Icons.more_vert, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+          icon: Icon(Icons.more_vert, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153)),
           onPressed: () {
             // Show options menu
           },
@@ -285,7 +300,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: const Color(0xFF7C3AED).withOpacity(0.2),
+            color: const Color(0xFF7C3AED).withAlpha(51),
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Icon(
@@ -305,11 +320,11 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           children: [
             Text(
               duration,
-              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
             ),
             Text(
               '${date.day}/${date.month}/${date.year}',
-              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 12),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153), fontSize: 12),
             ),
           ],
         ),
@@ -317,13 +332,13 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.play_arrow, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+              icon: Icon(Icons.play_arrow, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153)),
               onPressed: () {
                 // Play recording
               },
             ),
             IconButton(
-              icon: Icon(Icons.more_vert, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6)),
+              icon: Icon(Icons.more_vert, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153)),
               onPressed: () {
                 // Show options menu
               },
@@ -342,7 +357,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: const Color(0xFF059669).withOpacity(0.2),
+            color: const Color(0xFF059669).withAlpha(51),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
@@ -368,11 +383,11 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           children: [
             Text(
               activities,
-              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
             ),
             Text(
               '${date.day}/${date.month}/${date.year}',
-              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6), fontSize: 12),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153), fontSize: 12),
             ),
           ],
         ),
@@ -406,7 +421,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           Text(
             title,
             style: TextStyle(
-              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+              color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179),
               fontSize: 12,
             ),
           ),

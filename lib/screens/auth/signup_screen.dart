@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -11,6 +12,7 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -20,6 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -36,19 +39,57 @@ class _SignUpScreenState extends State<SignUpScreen> {
       final success = await authProvider.signUp(
         _emailController.text.trim(),
         _passwordController.text,
+        _nameController.text.trim(),
       );
 
       if (success && mounted) {
-        Navigator.of(context).pop(); // Go back to main app (will show onboarding)
-      }
-    } catch (e) {
-      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const LoginScreen(fromSignUp: true),
+          ),
+        );
+      } else if (mounted) {
+        // Handle the case where signUp returns false without an exception
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
+          const SnackBar(
+            content: Text('Sign up failed. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );
+      }
+    } catch (e) {
+      if (mounted) {
+        final errorMessage = e.toString().toLowerCase();
+        if (errorMessage.contains('user already registered')) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Account Exists'),
+              content: const Text(
+                  'An account with this email already exists. Would you like to log in instead?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Dismiss dialog
+                    Navigator.of(context).pop(); // Pop SignUpScreen to go back to LoginScreen
+                  },
+                  child: const Text('Log In'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString()),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } finally {
       if (mounted) {
@@ -106,11 +147,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   Text(
                     'Join Tutti and start your musical journey',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179),
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
+                  
+                  // Name field
+                  TextFormField(
+                    controller: _nameController,
+                    keyboardType: TextInputType.name,
+                    textCapitalization: TextCapitalization.words,
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                    decoration: InputDecoration(
+                      labelText: 'Full Name',
+                      labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
+                      prefixIcon: Icon(Icons.person, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
+                      filled: true,
+                      fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(26),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
                   
                   // Email field
                   TextFormField(
@@ -119,10 +186,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                     decoration: InputDecoration(
                       labelText: 'Email',
-                      labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
-                      prefixIcon: Icon(Icons.email, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                      labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
+                      prefixIcon: Icon(Icons.email, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
                       filled: true,
-                      fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
+                      fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(26),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -147,19 +214,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
-                      prefixIcon: Icon(Icons.lock, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                      labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
+                      prefixIcon: Icon(Icons.lock, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179),
                         ),
                         onPressed: () {
                           setState(() => _obscurePassword = !_obscurePassword);
                         },
                       ),
                       filled: true,
-                      fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
+                      fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(26),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -184,19 +251,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                     decoration: InputDecoration(
                       labelText: 'Confirm Password',
-                      labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
-                      prefixIcon: Icon(Icons.lock_outline, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                      labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
+                      prefixIcon: Icon(Icons.lock_outline, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
-                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179),
                         ),
                         onPressed: () {
                           setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
                         },
                       ),
                       filled: true,
-                      fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
+                      fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(26),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,

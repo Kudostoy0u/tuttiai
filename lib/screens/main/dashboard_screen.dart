@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../services/localization_service.dart';
 import '../features/sheet_music_screen.dart';
 import '../features/tuning_screen.dart';
 import '../features/listen_screen.dart';
@@ -7,11 +11,27 @@ import '../features/recording_analyzer_screen.dart';
 import '../features/community_videos_screen.dart';
 import '../../widgets/theme_image.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final settings = Provider.of<SettingsProvider>(context);
+    final user = authProvider.currentUser;
+    
+    String displayName = 'Guest';
+    if (user != null) {
+      // Prioritize profile name, fallback to metadata
+      displayName = authProvider.userProfile['name'] ?? user.userMetadata?['name'] ?? user.email ?? 'Musician';
+    }
+    final String firstName = displayName.split(' ').first;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -22,11 +42,51 @@ class DashboardScreen extends StatelessWidget {
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
               centerTitle: false,
-              title: const Text(
-                'Tutti',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+              title: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${LocalizationService.translate('welcome_back', settings.language)}, $firstName',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.local_fire_department,
+                        color: Colors.amber,
+                        size: 14,
+                      ),
+                      SizedBox(width: 4),
+                      Builder(builder:(context){final lang=Provider.of<SettingsProvider>(context).language;return Text(
+                        '12 ${LocalizationService.translate('days_unit', lang)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      );}),
+                      SizedBox(width: 16),
+                      Icon(
+                        Icons.hourglass_bottom,
+                        color: Colors.lightBlue,
+                        size: 12,
+                      ),
+                      SizedBox(width: 4),
+                      Builder(builder:(context){final lang=Provider.of<SettingsProvider>(context).language;return Text(
+                        '3${LocalizationService.translate('h_unit', lang)} 45${LocalizationService.translate('m_unit', lang)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      );}),
+                    ],
+                  ),
+                ],
               ),
               background: Container(
                 decoration: BoxDecoration(
@@ -76,7 +136,7 @@ class DashboardScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
@@ -93,15 +153,15 @@ class DashboardScreen extends StatelessWidget {
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 1.1, // Slightly taller cards to accommodate text
+                childAspectRatio: 1.1,
               ),
               delegate: SliverChildListDelegate([
                 _buildFeatureCard(
                   context,
-                  'Sheet Music\nFinder',
+                  LocalizationService.translate('sheet_music_finder', settings.language),
                   Icons.library_music,
                   const Color(0xFF6366F1),
-                  'AI-powered sheet music suggestions',
+                  LocalizationService.translate('sheet_music_desc', settings.language),
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const SheetMusicScreen()),
@@ -109,10 +169,10 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 _buildFeatureCard(
                   context,
-                  'Recording\nAnalyzer',
+                  LocalizationService.translate('recording_analyzer', settings.language),
                   Icons.mic,
                   const Color(0xFF7C3AED),
-                  'Record and analyze your practice sessions.',
+                  LocalizationService.translate('recording_desc', settings.language),
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const RecordingAnalyzerScreen()),
@@ -120,10 +180,10 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 _buildFeatureCard(
                   context,
-                  'Listen',
+                  LocalizationService.translate('listen', settings.language),
                   Icons.headphones,
                   const Color(0xFFDC2626),
-                  'Hear pieces or play with accompaniment',
+                  LocalizationService.translate('listen_desc', settings.language),
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const ListenScreen()),
@@ -131,10 +191,10 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 _buildFeatureCard(
                   context,
-                  'Metronome',
+                  LocalizationService.translate('metronome_feature', settings.language),
                   Icons.timer,
                   const Color(0xFFD97706),
-                  'Keep perfect time',
+                  LocalizationService.translate('metronome_desc', settings.language),
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const MetronomeScreen()),
@@ -142,10 +202,10 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 _buildFeatureCard(
                   context,
-                  'Tuning',
+                  LocalizationService.translate('tuning_feature', settings.language),
                   Icons.tune,
                   const Color(0xFF059669),
-                  'Tune your instrument with precision',
+                  LocalizationService.translate('tuning_desc', settings.language),
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const TuningScreen()),
@@ -153,10 +213,10 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 _buildFeatureCard(
                   context,
-                  'Community\nVideos',
+                  LocalizationService.translate('community_videos', settings.language),
                   Icons.people,
                   const Color(0xFFEC4899),
-                  'Get feedback from the community',
+                  LocalizationService.translate('community_desc', settings.language),
                   () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const CommunityVideosScreen()),
@@ -185,13 +245,13 @@ class DashboardScreen extends StatelessWidget {
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Theme.of(context).brightness == Brightness.light
-              ? Border.all(color: Colors.grey.withOpacity(0.3), width: 1)
+              ? Border.all(color: Colors.grey.withAlpha(77), width: 1)
               : null,
           boxShadow: [
             BoxShadow(
               color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.black.withOpacity(0.3)
-                  : Colors.grey.withOpacity(0.2),
+                  ? Colors.black.withAlpha(77)
+                  : Colors.grey.withAlpha(51),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -206,7 +266,7 @@ class DashboardScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
+                  color: color.withAlpha(51),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -235,7 +295,7 @@ class DashboardScreen extends StatelessWidget {
                   description,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179),
                     height: 1.2,
                   ),
                   textAlign: TextAlign.center,

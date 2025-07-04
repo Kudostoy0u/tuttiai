@@ -92,7 +92,7 @@ class _ListenScreenState extends State<ListenScreen> with SingleTickerProviderSt
                 borderSide: BorderSide.none,
               ),
               filled: true,
-              fillColor: Theme.of(context).colorScheme.surface.withOpacity(0.1),
+              fillColor: Theme.of(context).colorScheme.surface.withAlpha(26),
             ),
           ),
           const SizedBox(height: 16),
@@ -112,7 +112,7 @@ class _ListenScreenState extends State<ListenScreen> with SingleTickerProviderSt
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.surface.withAlpha(26),
               borderRadius: BorderRadius.circular(12),
             ),
             child: DropdownButtonHideUnderline(
@@ -151,7 +151,7 @@ class _ListenScreenState extends State<ListenScreen> with SingleTickerProviderSt
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(26),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

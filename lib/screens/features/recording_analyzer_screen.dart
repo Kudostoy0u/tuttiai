@@ -6,6 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:provider/provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../services/localization_service.dart';
 
 enum RecordState { stop, record, pause }
 
@@ -63,9 +66,10 @@ class _RecordingAnalyzerScreenState extends State<RecordingAnalyzerScreen> with 
   }
 
   Future<void> _checkPermissions() async {
-    if (!await _recorder.hasPermission()) {
+    final hasPermission = await _recorder.hasPermission();
+    if (!hasPermission && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Microphone permission required')),
+        SnackBar(content: Text(LocalizationService.translate('microphone_permission', Provider.of<SettingsProvider>(context,listen:false).language))),
       );
     }
   }
@@ -199,12 +203,12 @@ class _RecordingAnalyzerScreenState extends State<RecordingAnalyzerScreen> with 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Recording?'),
-        content: const Text('This action cannot be undone.'),
+        title: Text(LocalizationService.translate('delete_recording_q', Provider.of<SettingsProvider>(context,listen:false).language)),
+        content: Text(LocalizationService.translate('cannot_undo', Provider.of<SettingsProvider>(context,listen:false).language)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Builder(builder:(context){final lang=Provider.of<SettingsProvider>(context,listen:false).language;return Text(LocalizationService.translate('cancel',lang));}),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -271,10 +275,7 @@ class _RecordingAnalyzerScreenState extends State<RecordingAnalyzerScreen> with 
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Recording Analyzer',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Builder(builder: (context){final lang=Provider.of<SettingsProvider>(context).language;return Text(LocalizationService.translate('recording_analyzer_title',lang),style: const TextStyle(fontWeight: FontWeight.bold));}),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -331,7 +332,7 @@ class _RecordingAnalyzerScreenState extends State<RecordingAnalyzerScreen> with 
                               color: const Color(0xFFEF4444),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFEF4444).withOpacity(0.3),
+                                  color: const Color(0xFFEF4444).withAlpha(77),
                                   blurRadius: 8,
                                   spreadRadius: 2,
                                 ),
@@ -349,7 +350,7 @@ class _RecordingAnalyzerScreenState extends State<RecordingAnalyzerScreen> with 
                             height: 56,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.3) ?? Colors.white30, width: 2),
+                              border: Border.all(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(77) ?? Colors.white30, width: 2),
                             ),
                             child: IconButton(
                               onPressed: _recordState == RecordState.record 
@@ -390,7 +391,7 @@ class _RecordingAnalyzerScreenState extends State<RecordingAnalyzerScreen> with 
                 ? Center(
                     child: Text(
                       'No recordings yet',
-                      style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.54) ?? Colors.white54),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(138) ?? Colors.white54),
                     ),
                   )
                 : ListView.builder(
@@ -409,7 +410,7 @@ class _RecordingAnalyzerScreenState extends State<RecordingAnalyzerScreen> with 
                             decoration: BoxDecoration(
                               color: isPlaying 
                                   ? const Color(0xFF6366F1)
-                                  : const Color(0xFF6366F1).withOpacity(0.2),
+                                  : const Color(0xFF6366F1).withAlpha(51),
                               borderRadius: BorderRadius.circular(24),
                             ),
                             child: IconButton(
@@ -428,10 +429,10 @@ class _RecordingAnalyzerScreenState extends State<RecordingAnalyzerScreen> with 
                           ),
                           subtitle: Text(
                             '${_formatDuration(recording.duration)} • ${_formatDate(recording.date)}',
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.54) ?? Colors.white54),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(138) ?? Colors.white54),
                           ),
                           trailing: PopupMenuButton<String>(
-                            icon: Icon(Icons.more_vert, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.54) ?? Colors.white54),
+                            icon: Icon(Icons.more_vert, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(138) ?? Colors.white54),
                             onSelected: (value) {
                               switch (value) {
                                 case 'rename':
@@ -505,11 +506,10 @@ class WaveformPainter extends CustomPainter {
     // Draw smooth waveform
     for (int i = 0; i < amplitudes.length; i++) {
       final x = (i / (amplitudes.length - 1)) * width;
-      final amplitude = amplitudes[i];
+      // amplitude not needed here anymore
       
       // Create symmetric waveform
-      final y1 = centerY - (amplitude * centerY * 0.8);
-      final y2 = centerY + (amplitude * centerY * 0.8);
+      final y1 = centerY - (amplitudes[i] * centerY * 0.8);
       
       if (i == 0) {
         path.moveTo(x, centerY);
@@ -529,8 +529,7 @@ class WaveformPainter extends CustomPainter {
     // Draw bottom curve
     for (int i = amplitudes.length - 1; i >= 0; i--) {
       final x = (i / (amplitudes.length - 1)) * width;
-      final amplitude = amplitudes[i];
-      final y2 = centerY + (amplitude * centerY * 0.8);
+      // amplitude not needed here anymore
       
       if (i < amplitudes.length - 1) {
         final nextX = ((i + 1) / (amplitudes.length - 1)) * width;
@@ -538,7 +537,7 @@ class WaveformPainter extends CustomPainter {
         final nextY2 = centerY + (nextAmplitude * centerY * 0.8);
         
         final controlPointX = (nextX + x) / 2;
-        path.quadraticBezierTo(controlPointX, nextY2, x, y2);
+        path.quadraticBezierTo(controlPointX, nextY2, x, nextY2);
       }
     }
     
@@ -547,7 +546,7 @@ class WaveformPainter extends CustomPainter {
     // Fill the waveform
     canvas.drawPath(
       path,
-      paint..style = PaintingStyle.fill..color = color.withOpacity(0.3),
+      paint..style = PaintingStyle.fill..color = color.withAlpha(77),
     );
     
     // Draw the outline
@@ -561,7 +560,7 @@ class WaveformPainter extends CustomPainter {
       canvas.drawLine(
         Offset(0, centerY),
         Offset(width, centerY),
-        paint..strokeWidth = 1..color = color.withOpacity(0.5),
+        paint..strokeWidth = 1..color = color.withAlpha(128),
       );
     }
   }

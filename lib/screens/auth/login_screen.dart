@@ -5,7 +5,8 @@ import 'signup_screen.dart';
 import '../../widgets/theme_image.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final bool fromSignUp;
+  const LoginScreen({super.key, this.fromSignUp = false});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -17,6 +18,22 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.fromSignUp) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account created! Please check your email for a confirmation link.'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 6),
+          ),
+        );
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -38,13 +55,16 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (success && mounted) {
-        // Navigation is handled by the AppWrapper
+        // Authentication state changes will cause AppWrapper to rebuild.
+        // Close any extra routes (e.g., if we came from sign-up).
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {
+        final errorMessage = e.toString();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString()),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );
@@ -137,9 +157,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 8),
                       
                       Text(
-                        'Sign in to continue your musical journey',
+                        'Welcome back! Log in to continue your musical journey.',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                          color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -152,10 +172,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
-                          prefixIcon: Icon(Icons.email, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                          labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
+                          prefixIcon: Icon(Icons.email, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
                           filled: true,
-                          fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
+                          fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(26),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -180,19 +200,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
-                          prefixIcon: Icon(Icons.lock, color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                          labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
+                          prefixIcon: Icon(Icons.lock, color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                              color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179),
                             ),
                             onPressed: () {
                               setState(() => _obscurePassword = !_obscurePassword);
                             },
                           ),
                           filled: true,
-                          fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.1),
+                          fillColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(26),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
@@ -246,7 +266,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Text(
                             "Don't have an account? ",
-                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)),
+                            style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179)),
                           ),
                           GestureDetector(
                             onTap: () {

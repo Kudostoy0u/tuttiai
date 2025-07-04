@@ -5,6 +5,8 @@ import '../onboarding/onboarding_modal.dart';
 import 'dashboard_screen.dart';
 import 'library_screen.dart';
 import 'settings_screen.dart';
+import '../../providers/settings_provider.dart';
+import '../../services/localization_service.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -33,16 +35,24 @@ class _MainLayoutState extends State<MainLayout> {
   void _checkOnboarding() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (!authProvider.hasCompletedOnboarding) {
+      // Debugging: print that onboarding will show
+      // ignore: avoid_print
+      print('MainLayout: Onboarding incomplete, showing modal.');
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => const OnboardingModal(),
       );
+    } else {
+      // Debugging: print that onboarding is complete
+      // ignore: avoid_print
+      print('MainLayout: Onboarding already completed.');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final settings = Provider.of<SettingsProvider>(context);
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -53,7 +63,7 @@ class _MainLayoutState extends State<MainLayout> {
           color: Theme.of(context).cardColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -64,21 +74,22 @@ class _MainLayoutState extends State<MainLayout> {
           onTap: (index) => setState(() => _currentIndex = index),
           backgroundColor: Colors.transparent,
           elevation: 0,
-          selectedItemColor: const Color(0xFF6366F1),
-          unselectedItemColor: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+          selectedItemColor: Theme.of(context).colorScheme.primary,
+          unselectedItemColor: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153),
+          showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
+              icon: const Icon(Icons.home),
+              label: LocalizationService.translate('home', settings.language),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.library_music),
-              label: 'Library',
+              icon: const Icon(Icons.library_music),
+              label: LocalizationService.translate('library', settings.language),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: 'Settings',
+              icon: const Icon(Icons.settings),
+              label: LocalizationService.translate('settings', settings.language),
             ),
           ],
         ),

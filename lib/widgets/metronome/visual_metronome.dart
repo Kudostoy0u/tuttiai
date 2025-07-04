@@ -90,7 +90,7 @@ class VisualMetronome extends StatelessWidget {
                                                   color: Theme.of(context)
                                                       .colorScheme
                                                       .secondary
-                                                      .withOpacity(0.3),
+                                                      .withAlpha(153),
                                                   blurRadius: 6,
                                                   spreadRadius: 1,
                                                 ),
@@ -151,12 +151,12 @@ class VisualMetronome extends StatelessWidget {
                                               : Theme.of(context)
                                                   .colorScheme
                                                   .secondary)
-                                          .withOpacity(
-                                              1.0 - beatController.value * 0.3)
+                                          .withAlpha(
+                                              255 * (1.0 - beatController.value * 0.3).round())
                                       : Theme.of(context)
                                           .colorScheme
                                           .onSurface
-                                          .withOpacity(0.1),
+                                          .withAlpha(77),
                                   border: Border.all(
                                     color: isAccent
                                         ? Theme.of(context).colorScheme.primary
@@ -179,7 +179,7 @@ class VisualMetronome extends StatelessWidget {
                                               .textTheme
                                               .bodyMedium
                                               ?.color
-                                              ?.withOpacity(0.6),
+                                              ?.withAlpha(128),
                                       fontSize: isAccent ? 16 : 14,
                                       fontWeight: isAccent
                                           ? FontWeight.bold
@@ -227,7 +227,7 @@ class VisualMetronome extends StatelessWidget {
                                           : Theme.of(context)
                                               .colorScheme
                                               .onSurface
-                                              .withOpacity(0.3),
+                                              .withAlpha(77),
                                     ),
                                   ),
                                 );
@@ -259,7 +259,7 @@ class VisualMetronome extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withAlpha(51),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -279,7 +279,7 @@ class VisualMetronome extends StatelessWidget {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12.0),
               ),
               child: const Center(

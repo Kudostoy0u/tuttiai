@@ -3,38 +3,42 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../screens/main/edit_profile_screen.dart';
+import '../../services/localization_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Settings',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              LocalizationService.translate('settings', settings.language),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-        ),
-      ),
-      body: Consumer<SettingsProvider>(
-        builder: (context, settings, child) {
-          return ListView(
+          body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
               // Profile section
-              _buildProfileSection(context),
+              _buildProfileSection(context, settings),
               const SizedBox(height: 24),
               
               // Preferences section
               _buildSection(
-                'Preferences',
+                LocalizationService.translate('preferences', settings.language),
                 [
                   _buildSettingsTile(
                     Icons.notifications,
-                    'Notifications',
-                    settings.notificationsEnabled ? 'Enabled' : 'Disabled',
+                    LocalizationService.translate('notifications', settings.language),
+                    settings.notificationsEnabled 
+                        ? LocalizationService.translate('enabled', settings.language)
+                        : LocalizationService.translate('disabled', settings.language),
                     () => _showNotificationSettings(context),
                     trailing: Switch(
                       value: settings.notificationsEnabled,
@@ -44,8 +48,10 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   _buildSettingsTile(
                     Icons.dark_mode,
-                    'Dark Mode',
-                    settings.isDarkMode ? 'Enabled' : 'Disabled',
+                    LocalizationService.translate('dark_mode', settings.language),
+                    settings.isDarkMode 
+                        ? LocalizationService.translate('enabled', settings.language)
+                        : LocalizationService.translate('disabled', settings.language),
                     () {},
                     trailing: Switch(
                       value: settings.isDarkMode,
@@ -55,7 +61,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   _buildSettingsTile(
                     Icons.language,
-                    'Language',
+                    LocalizationService.translate('language', settings.language),
                     settings.language,
                     () => _showLanguageDialog(context),
                   ),
@@ -65,25 +71,25 @@ class SettingsScreen extends StatelessWidget {
               
               // Practice section
               _buildSection(
-                'Practice',
+                LocalizationService.translate('practice', settings.language),
                 [
                   _buildSettingsTile(
                     Icons.timer,
-                    'Practice Reminders',
+                    LocalizationService.translate('practice_reminders', settings.language),
                     settings.practiceReminders 
                         ? 'Daily at ${settings.reminderTime.format(context)}'
-                        : 'Disabled',
+                        : LocalizationService.translate('disabled', settings.language),
                     () => _showPracticeReminderSettings(context),
                   ),
                   _buildSettingsTile(
                     Icons.tune,
-                    'Default Tuning',
+                    LocalizationService.translate('default_tuning', settings.language),
                     settings.defaultTuning,
                     () => _showTuningDialog(context),
                   ),
                   _buildSettingsTile(
                     Icons.straighten,
-                    'Metronome Default Tempo',
+                    LocalizationService.translate('metronome_default_tempo', settings.language),
                     '${settings.metronomeDefaultTempo} BPM',
                     () => _showTempoDialog(context),
                   ),
@@ -93,23 +99,23 @@ class SettingsScreen extends StatelessWidget {
               
               // Support section
               _buildSection(
-                'Support',
+                LocalizationService.translate('support', settings.language),
                 [
                   _buildSettingsTile(
                     Icons.help,
-                    'Help & FAQ',
-                    'Get help with Tutti',
+                    LocalizationService.translate('help_faq', settings.language),
+                    LocalizationService.translate('help_desc', settings.language),
                     () => _showHelpDialog(context),
                   ),
                   _buildSettingsTile(
                     Icons.feedback,
-                    'Send Feedback',
-                    'Tell us how we can improve',
+                    LocalizationService.translate('send_feedback', settings.language),
+                    LocalizationService.translate('feedback_desc', settings.language),
                     () => _showFeedbackDialog(context),
                   ),
                   _buildSettingsTile(
                     Icons.info,
-                    'About',
+                    LocalizationService.translate('about', settings.language),
                     'Version 1.0.0',
                     () => _showAboutDialog(context),
                   ),
@@ -119,25 +125,25 @@ class SettingsScreen extends StatelessWidget {
               
               // Account section
               _buildSection(
-                'Account',
+                LocalizationService.translate('account', settings.language),
                 [
                   _buildSettingsTile(
                     Icons.logout,
-                    'Sign Out',
-                    'Sign out of your account',
+                    LocalizationService.translate('sign_out', settings.language),
+                    LocalizationService.translate('sign_out_desc', settings.language),
                     () => _showSignOutDialog(context),
                     isDestructive: true,
                   ),
                 ],
               ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildProfileSection(BuildContext context) {
+  Widget _buildProfileSection(BuildContext context, SettingsProvider settings) {
     return Consumer<AuthProvider>(
       builder: (context, auth, child) {
         return Container(
@@ -165,24 +171,24 @@ class SettingsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Your Profile',
-                      style: TextStyle(
+                    Text(
+                      LocalizationService.translate('profile', settings.language),
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      auth.userProfile['instrument'] ?? 'No instrument selected',
+                      auth.userProfile['instrument'] ?? LocalizationService.translate('no_instrument_selected', settings.language),
                       style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153),
                       ),
                     ),
                     Text(
-                      auth.userProfile['skillLevel'] ?? 'No skill level set',
+                      auth.userProfile['skillLevel'] ?? LocalizationService.translate('no_skill_level_set', settings.language),
                       style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(128),
                         fontSize: 12,
                       ),
                     ),
@@ -190,15 +196,15 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
               IconButton(
-                onPressed: () {
-                  // TODO: Edit profile functionality
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profile editing coming soon!')),
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const EditProfileScreen()),
                   );
                 },
                 icon: Icon(
                   Icons.edit,
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153),
                 ),
               ),
             ],
@@ -213,7 +219,7 @@ class SettingsScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Builder(
-          builder: (context) =>             Text(
+          builder: (context) => Text(
               title,
               style: const TextStyle(
                 fontSize: 18,
@@ -261,12 +267,12 @@ class SettingsScreen extends StatelessWidget {
         subtitle: Text(
           subtitle,
           style: TextStyle(
-            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+            color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(153),
           ),
         ),
         trailing: trailing ?? Icon(
           Icons.chevron_right,
-          color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
+          color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179),
         ),
         onTap: onTap,
       ),
@@ -292,7 +298,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showLanguageDialog(BuildContext context) {
-    final languages = ['English', 'Spanish', 'French', 'German', 'Italian'];
+    final languages = ['English', 'Spanish', 'French', 'German', 'Italian', 'Chinese', 'Hindi'];
     final settings = Provider.of<SettingsProvider>(context, listen: false);
     
     showDialog(
@@ -561,9 +567,10 @@ class SettingsScreen extends StatelessWidget {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Provider.of<AuthProvider>(context, listen: false).signOut();
+              onPressed: () async {
+                final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                Navigator.of(context).pop(); // Close dialog
+                await authProvider.signOut();
               },
               child: const Text(
                 'Sign Out',

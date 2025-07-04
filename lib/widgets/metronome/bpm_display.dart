@@ -36,7 +36,7 @@ class BpmDisplay extends StatelessWidget {
                         .textTheme
                         .bodyMedium
                         ?.color
-                        ?.withOpacity(0.7),
+                        ?.withAlpha(179),
                   ),
                 ),
               ],
@@ -45,7 +45,7 @@ class BpmDisplay extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                color: Theme.of(context).colorScheme.secondary.withAlpha(51),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(

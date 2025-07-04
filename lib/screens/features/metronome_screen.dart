@@ -7,6 +7,9 @@ import 'dart:typed_data';
 import 'package:tuttiai/widgets/metronome/bpm_display.dart';
 import 'package:tuttiai/widgets/metronome/metronome_controls.dart';
 import 'package:tuttiai/widgets/metronome/visual_metronome.dart';
+import 'package:provider/provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../services/localization_service.dart';
 
 class MetronomeScreen extends StatefulWidget {
   const MetronomeScreen({super.key});
@@ -35,7 +38,6 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
   // Tap tempo variables
   final List<DateTime> _tapTimes = [];
 
-  final List<int> _commonBpms = [60, 72, 80, 92, 104, 120, 138, 144, 160, 176, 192, 208];
   final List<Map<String, dynamic>> _tempoMarkings = [
     {'name': 'Largo', 'range': '40-60', 'min': 40, 'max': 60},
     {'name': 'Adagio', 'range': '66-76', 'min': 66, 'max': 76},
@@ -49,7 +51,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
   final List<Map<String, dynamic>> _accentPatterns = [
     {'name': 'None', 'pattern': []},
     {'name': 'First Beat', 'pattern': []},
-    {'name': 'Strong-Weak', 'pattern': [true, false]},
+    {'name': 'Strong_Weak', 'pattern': [true, false]},
     {'name': 'Waltz', 'pattern': [true, false, false]},
     {'name': 'March', 'pattern': [true, false, true, false]},
     {'name': 'Complex', 'pattern': [true, false, true, false, false, true]},
@@ -419,12 +421,7 @@ class _MetronomeScreenState extends State<MetronomeScreen> with TickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Metronome',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Builder(builder: (context){final lang=Provider.of<SettingsProvider>(context).language;return Text(LocalizationService.translate('metronome_title', lang),style: const TextStyle(fontWeight: FontWeight.bold));}),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),

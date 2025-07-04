@@ -23,27 +23,30 @@ class _OnboardingModalState extends State<OnboardingModal> {
   final List<String> _goals = [];
 
   final List<String> _instruments = [
-    'Piano', 'Guitar', 'Violin', 'Cello', 'Viola', 'Bass', 'Flute', 'Clarinet', 
-    'Saxophone', 'Trumpet', 'Trombone', 'Oboe', 'Drums', 'Voice', 'Other'
+    'Piano', 'Violin', 'Viola', 'Cello', 'Double Bass', 'Flute', 'Oboe', 
+    'Clarinet', 'Bassoon', 'French Horn', 'Trumpet', 'Trombone', 'Tuba',
+    'Harp', 'Harpsichord', 'Organ', 'Voice'
   ];
 
-  // Instrument icons mapping
+  // Instrument icons mapping for classical instruments
   final Map<String, IconData> _instrumentIcons = {
     'Piano': MdiIcons.piano,
-    'Guitar': MdiIcons.guitarAcoustic,
     'Violin': MdiIcons.violin,
-    'Cello': MdiIcons.musicClefBass,
     'Viola': MdiIcons.violin,
-    'Bass': MdiIcons.guitarElectric,
+    'Cello': MdiIcons.musicClefBass,
+    'Double Bass': MdiIcons.musicClefBass,
     'Flute': MdiIcons.musicNoteSixteenth,
+    'Oboe': MdiIcons.musicNoteEighth,
     'Clarinet': MdiIcons.musicNoteSixteenth,
-    'Saxophone': MdiIcons.saxophone,
+    'Bassoon': MdiIcons.musicNoteEighth,
+    'French Horn': MdiIcons.trumpet,
     'Trumpet': MdiIcons.trumpet,
     'Trombone': MdiIcons.trumpet,
-    'Oboe': MdiIcons.musicNoteEighth,
-    'Drums': MdiIcons.music,
+    'Tuba': MdiIcons.trumpet,
+    'Harp': MdiIcons.musicNote,
+    'Harpsichord': MdiIcons.piano,
+    'Organ': MdiIcons.piano,
     'Voice': MdiIcons.microphone,
-    'Other': MdiIcons.music,
   };
 
   final List<String> _skillLevels = [
@@ -112,68 +115,75 @@ class _OnboardingModalState extends State<OnboardingModal> {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        height: MediaQuery.of(context).size.height * 0.8,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(20),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: Theme.of(context).colorScheme.copyWith(
+            onPrimary: Colors.white,
+          ),
         ),
-        child: Column(
-          children: [
-            // Progress indicator
-            LinearProgressIndicator(
-              value: (_currentPage + 1) / 6,
-              backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
-              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-            ),
-            const SizedBox(height: 24),
-            
-            // Content
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (index) => setState(() => _currentPage = index),
-                children: [
-                  _buildWelcomePage(),
-                  _buildInstrumentPage(),
-                  _buildSkillLevelPage(),
-                  _buildGenresPage(),
-                  _buildPracticeFrequencyPage(),
-                  _buildGoalsPage(),
-                ],
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              // Progress indicator
+              LinearProgressIndicator(
+                value: (_currentPage + 1) / 6,
+                backgroundColor: Theme.of(context).colorScheme.onSurface.withAlpha(51),
+                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
               ),
-            ),
-            
-            // Navigation buttons
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton(
-                  onPressed: _currentPage > 0 ? _previousPage : null,
-                  child: Text(
-                    'Back',
-                    style: TextStyle(
-                      color: _currentPage > 0
-                          ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7)
-                          : Colors.transparent,
+              const SizedBox(height: 24),
+              
+              // Content
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) => setState(() => _currentPage = index),
+                  children: [
+                    _buildWelcomePage(),
+                    _buildInstrumentPage(),
+                    _buildSkillLevelPage(),
+                    _buildGenresPage(),
+                    _buildPracticeFrequencyPage(),
+                    _buildGoalsPage(),
+                  ],
+                ),
+              ),
+              
+              // Navigation buttons
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: _currentPage > 0 ? _previousPage : null,
+                    child: Text(
+                      'Back',
+                      style: TextStyle(
+                        color: _currentPage > 0
+                            ? Theme.of(context).colorScheme.onSurface.withAlpha(179)
+                            : Colors.transparent,
+                      ),
                     ),
                   ),
-                ),
-                ElevatedButton(
-                  onPressed: _canProceed() ? _nextPage : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  ElevatedButton(
+                    onPressed: _canProceed() ? _nextPage : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    ),
+                    child: Text(_currentPage == 5 ? 'Complete' : 'Next'),
                   ),
-                  child: Text(_currentPage == 5 ? 'Complete' : 'Next'),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -213,7 +223,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
         Text(
           'Let\'s personalize your musical experience. We\'ll ask you a few questions to better understand your musical journey.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.onSurface.withAlpha(179),
           ),
           textAlign: TextAlign.center,
         ),
@@ -252,7 +262,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                        : Theme.of(context).colorScheme.surface.withAlpha(26),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
@@ -265,8 +275,8 @@ class _OnboardingModalState extends State<OnboardingModal> {
                       Icon(
                         _instrumentIcons[instrument] ?? Icons.music_note,
                         color: isSelected
-                            ? Theme.of(context).colorScheme.onPrimary
-                            : Theme.of(context).colorScheme.onSurface,
+                            ? Colors.white
+                            : Theme.of(context).colorScheme.onSurface.withAlpha(179),
                         size: 24,
                       ),
                       const SizedBox(height: 4),
@@ -274,7 +284,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                         instrument,
                         style: TextStyle(
                           color: isSelected
-                            ? Theme.of(context).colorScheme.onPrimary
+                            ? Colors.white
                             : Theme.of(context).colorScheme.onSurface,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                           fontSize: 12,
@@ -317,7 +327,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                          : Theme.of(context).colorScheme.surface.withAlpha(26),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -325,7 +335,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                         Icon(
                           isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
                           color: isSelected
-                              ? Theme.of(context).colorScheme.onPrimary
+                              ? Colors.white
                               : Theme.of(context).colorScheme.onSurface,
                         ),
                         const SizedBox(width: 12),
@@ -333,7 +343,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                           level,
                           style: TextStyle(
                             color: isSelected
-                                ? Theme.of(context).colorScheme.onPrimary
+                                ? Colors.white
                                 : Theme.of(context).colorScheme.onSurface,
                             fontSize: 16,
                           ),
@@ -364,7 +374,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
         const SizedBox(height: 8),
         Text(
           'Select all that apply',
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withAlpha(179)),
         ),
         const SizedBox(height: 24),
         Expanded(
@@ -394,7 +404,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                        : Theme.of(context).colorScheme.surface.withAlpha(26),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
@@ -402,7 +412,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                       genre,
                       style: TextStyle(
                         color: isSelected
-                            ? Theme.of(context).colorScheme.onPrimary
+                            ? Colors.white
                             : Theme.of(context).colorScheme.onSurface,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                       ),
@@ -443,7 +453,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                            : Theme.of(context).colorScheme.surface.withAlpha(26),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -451,7 +461,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                           Icon(
                             isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
                             color: isSelected
-                                ? Theme.of(context).colorScheme.onPrimary
+                                ? Colors.white
                                 : Theme.of(context).colorScheme.onSurface,
                           ),
                           const SizedBox(width: 12),
@@ -459,7 +469,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                             frequency,
                             style: TextStyle(
                               color: isSelected
-                                  ? Theme.of(context).colorScheme.onPrimary
+                                  ? Colors.white
                                   : Theme.of(context).colorScheme.onSurface,
                               fontSize: 16,
                             ),
@@ -478,24 +488,20 @@ class _OnboardingModalState extends State<OnboardingModal> {
                   decoration: BoxDecoration(
                     color: _hasTeacher
                         ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                        : Theme.of(context).colorScheme.surface.withAlpha(26),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
                       Icon(
                         _hasTeacher ? Icons.check_box : Icons.check_box_outline_blank,
-                        color: _hasTeacher
-                            ? Theme.of(context).colorScheme.onPrimary
-                            : Theme.of(context).colorScheme.onSurface,
+                        color: _hasTeacher ? Colors.white : Theme.of(context).colorScheme.onSurface,
                       ),
                       const SizedBox(width: 12),
                       Text(
                         'I have a music teacher',
                         style: TextStyle(
-                          color: _hasTeacher
-                              ? Theme.of(context).colorScheme.onPrimary
-                              : Theme.of(context).colorScheme.onSurface,
+                          color: _hasTeacher ? Colors.white : Theme.of(context).colorScheme.onSurface,
                           fontSize: 16,
                         ),
                       ),
@@ -524,7 +530,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
         const SizedBox(height: 8),
         Text(
           'Select all that apply',
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withAlpha(179)),
         ),
         const SizedBox(height: 24),
         Expanded(
@@ -551,7 +557,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.surface.withOpacity(0.1),
+                          : Theme.of(context).colorScheme.surface.withAlpha(26),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -559,7 +565,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                         Icon(
                           isSelected ? Icons.check_box : Icons.check_box_outline_blank,
                           color: isSelected
-                              ? Theme.of(context).colorScheme.onPrimary
+                              ? Colors.white
                               : Theme.of(context).colorScheme.onSurface,
                         ),
                         const SizedBox(width: 12),
@@ -568,7 +574,7 @@ class _OnboardingModalState extends State<OnboardingModal> {
                             goal,
                             style: TextStyle(
                               color: isSelected
-                                  ? Theme.of(context).colorScheme.onPrimary
+                                  ? Colors.white
                                   : Theme.of(context).colorScheme.onSurface,
                               fontSize: 16,
                             ),

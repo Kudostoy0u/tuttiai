@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../services/localization_service.dart';
 
 class BpmControls extends StatelessWidget {
   final int bpm;
@@ -24,10 +27,10 @@ class BpmControls extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: () => onBpmChanged(bpm - 1),
-                  icon: Icon(Icons.remove, color: Theme.of(context).iconTheme.color),
+                  icon: Icon(Icons.remove, color: Theme.of(context).iconTheme.color?.withAlpha(153)),
                   style: IconButton.styleFrom(
                     backgroundColor:
-                        Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                        Theme.of(context).colorScheme.onSurface.withAlpha(26),
                   ),
                 ),
                 Expanded(
@@ -40,16 +43,16 @@ class BpmControls extends StatelessWidget {
                     inactiveColor: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.3),
+                        .withAlpha(77),
                     onChanged: (value) => onBpmChanged(value.round()),
                   ),
                 ),
                 IconButton(
                   onPressed: () => onBpmChanged(bpm + 1),
-                  icon: Icon(Icons.add, color: Theme.of(context).iconTheme.color),
+                  icon: Icon(Icons.add, color: Theme.of(context).iconTheme.color?.withAlpha(153)),
                   style: IconButton.styleFrom(
                     backgroundColor:
-                        Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                        Theme.of(context).colorScheme.onSurface.withAlpha(26),
                   ),
                 ),
               ],
@@ -70,7 +73,7 @@ class BpmControls extends StatelessWidget {
                           : Theme.of(context)
                               .colorScheme
                               .onSurface
-                              .withOpacity(0.1),
+                              .withAlpha(26),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -82,7 +85,7 @@ class BpmControls extends StatelessWidget {
                                 .textTheme
                                 .bodyMedium
                                 ?.color
-                                ?.withOpacity(0.7),
+                                ?.withAlpha(179),
                         fontSize: 10,
                         fontWeight:
                             presetBpm == bpm ? FontWeight.bold : FontWeight.normal,
@@ -123,13 +126,13 @@ class SubdivisionControls extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            const Text(
-              'Note Subdivision',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Builder(builder: (context) {
+              final settings = Provider.of<SettingsProvider>(context);
+              return Text(
+                LocalizationService.translate('note_subdivision', settings.language),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              );
+            }),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -148,7 +151,7 @@ class SubdivisionControls extends StatelessWidget {
                           : Theme.of(context)
                               .colorScheme
                               .onSurface
-                              .withOpacity(0.1),
+                              .withAlpha(26),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -160,7 +163,7 @@ class SubdivisionControls extends StatelessWidget {
                                 .textTheme
                                 .bodyMedium
                                 ?.color
-                                ?.withOpacity(0.7),
+                                ?.withAlpha(179),
                         fontSize: 20,
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.normal,
@@ -215,13 +218,13 @@ class TimeAccentControls extends StatelessWidget {
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   children: [
-                    const Text(
-                      'Time Signature',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Builder(builder: (context) {
+                      final settings = Provider.of<SettingsProvider>(context);
+                      return Text(
+                        LocalizationService.translate('time_signature', settings.language),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      );
+                    }),
                     const SizedBox(height: 6),
                     SizedBox(
                       height: 60,
@@ -251,7 +254,7 @@ class TimeAccentControls extends StatelessWidget {
                                     : Theme.of(context)
                                         .colorScheme
                                         .onSurface
-                                        .withOpacity(0.1),
+                                        .withAlpha(26),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Center(
@@ -264,7 +267,7 @@ class TimeAccentControls extends StatelessWidget {
                                             .textTheme
                                             .bodyMedium
                                             ?.color
-                                            ?.withOpacity(0.7),
+                                            ?.withAlpha(179),
                                     fontSize: 10,
                                     fontWeight: isSelected
                                         ? FontWeight.bold
@@ -289,13 +292,13 @@ class TimeAccentControls extends StatelessWidget {
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   children: [
-                    const Text(
-                      'Accent Pattern',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Builder(builder: (context) {
+                      final settings = Provider.of<SettingsProvider>(context);
+                      return Text(
+                        LocalizationService.translate('accent_pattern', settings.language),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      );
+                    }),
                     const SizedBox(height: 6),
                     DropdownButton<String>(
                       alignment: Alignment.center,
@@ -310,10 +313,14 @@ class TimeAccentControls extends StatelessWidget {
                       items: accentPatterns.map<DropdownMenuItem<String>>((pattern) {
                         return DropdownMenuItem<String>(
                           value: pattern['name'],
-                          child: Text(
-                            pattern['name'],
-                            style: const TextStyle(fontSize: 12),
-                          ),
+                          child: Builder(builder:(context){
+                            final lang = Provider.of<SettingsProvider>(context).language;
+                            final key = pattern['name'].toString().toLowerCase().replaceAll(' ', '_');
+                            return Text(
+                              LocalizationService.translate(key + '_pattern', lang),
+                              style: const TextStyle(fontSize: 12),
+                            );
+                          }),
                         );
                       }).toList(),
                     ),
@@ -350,12 +357,14 @@ class FeedbackControls extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Audio Volume',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            Builder(builder: (context) {
+              final settings = Provider.of<SettingsProvider>(context);
+              return Text(LocalizationService.translate('audio_volume', settings.language), style: const TextStyle(fontWeight: FontWeight.bold));
+            }),
             Row(
               children: [
                 Icon(Icons.volume_off,
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.6)),
+                    color: Theme.of(context).iconTheme.color?.withAlpha(102)),
                 Expanded(
                   child: Slider(
                     value: audioVolume,
@@ -366,7 +375,7 @@ class FeedbackControls extends StatelessWidget {
                     inactiveColor: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.3),
+                        .withAlpha(77),
                     onChanged: onAudioVolumeChanged,
                   ),
                 ),
@@ -374,12 +383,14 @@ class FeedbackControls extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            const Text('Haptic Feedback',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            Builder(builder: (context) {
+              final settings = Provider.of<SettingsProvider>(context);
+              return Text(LocalizationService.translate('haptic_feedback', settings.language), style: const TextStyle(fontWeight: FontWeight.bold));
+            }),
             Row(
               children: [
                 Icon(Icons.vibration,
-                    color: Theme.of(context).iconTheme.color?.withOpacity(0.6)),
+                    color: Theme.of(context).iconTheme.color?.withAlpha(102)),
                 Expanded(
                   child: Slider(
                     value: hapticIntensity,
@@ -390,7 +401,7 @@ class FeedbackControls extends StatelessWidget {
                     inactiveColor: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.3),
+                        .withAlpha(77),
                     onChanged: onHapticIntensityChanged,
                   ),
                 ),

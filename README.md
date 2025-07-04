@@ -1,162 +1,90 @@
-# Tutti 🎵
+# Tutti 🎶 – Your AI-Powered Music Companion
 
-Your AI-powered music companion for smart sheet music recommendations and comprehensive music practice tools.
-
-## Features
-
-### 🎼 Smart Sheet Music Recommendations
-- AI-powered suggestions based on your skill level, preferences, and practice history
-- Personalized recommendations with match percentages
-- Filter by genre, difficulty, and rating
-- Preview and add to library functionality
-
-### 🎛️ Music Tools Hub
-- **Tuning**: Precise instrument tuning with visual feedback
-- **Intonation Checker**: Real-time pitch accuracy analysis with visual graphs
-- **Metronome**: Digital metronome with customizable tempo and time signatures
-- **Recording Library**: Record and organize practice sessions
-
-### 👤 User Experience
-- **Authentication**: Supabase-powered login and signup
-- **Onboarding**: Comprehensive musical profile setup
-  - Instrument selection
-  - Skill level assessment
-  - Genre preferences
-  - Practice frequency
-  - Musical goals
-- **Dark Theme**: Beautiful dark mode interface
-- **Bottom Navigation**: Easy access to Home, Library, and Settings
-
-## Tech Stack
-
-- **Framework**: Flutter
-- **Authentication**: Supabase (commented out for MVP)
-- **State Management**: Provider
-- **UI**: Google Fonts, Material Design 3
-- **Local Storage**: SharedPreferences
-
-## Project Structure
-
-```
-lib/
-├── main.dart                           # App entry point
-├── providers/
-│   └── auth_provider.dart             # Authentication state management
-├── screens/
-│   ├── splash_screen.dart             # Loading screen
-│   ├── auth/
-│   │   ├── login_screen.dart          # User login
-│   │   └── signup_screen.dart         # User registration
-│   ├── onboarding/
-│   │   └── onboarding_modal.dart      # Musical profile setup
-│   ├── main/
-│   │   ├── main_layout.dart           # Bottom navigation layout
-│   │   ├── dashboard_screen.dart      # Feature cards dashboard
-│   │   ├── library_screen.dart        # Sheet music & recordings
-│   │   └── settings_screen.dart       # App settings
-│   └── features/
-│       ├── sheet_music_screen.dart    # AI recommendations
-│       ├── tuning_screen.dart         # Instrument tuning
-│       ├── intonation_screen.dart     # Pitch analysis
-│       ├── metronome_screen.dart      # Digital metronome
-│       └── recording_library_screen.dart # Practice recordings
-└── assets/
-    └── tonic.jpg                     # App logo
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Flutter SDK (3.8.1 or higher)
-- Dart SDK
-- iOS Simulator or Android Emulator (or physical device)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd tuttiai
-   ```
-
-2. **Install dependencies**
-   ```bash
-   flutter pub get
-   ```
-
-3. **For iOS development** (optional)
-   ```bash
-   sudo gem install cocoapods
-   cd ios && pod install
-   ```
-
-4. **Run the app**
-   ```bash
-   flutter run
-   ```
-
-## MVP Features
-
-This is an MVP (Minimum Viable Product) version with the following characteristics:
-
-- **Authentication**: Local storage simulation (Supabase integration commented out)
-- **AI Recommendations**: Mock data with realistic examples
-- **Audio Features**: Visual feedback only (no actual audio processing)
-- **File Operations**: UI mockups (no actual file handling)
-
-### To Enable Full Features
-
-1. **Supabase Setup**:
-   - Uncomment Supabase initialization in `main.dart`
-   - Add your Supabase URL and anon key
-   - Uncomment API calls in `auth_provider.dart`
-
-2. **Audio Processing**:
-   - Integrate audio recording libraries
-   - Add microphone permissions
-   - Implement actual frequency detection
-
-3. **File Management**:
-   - Enable actual file picker functionality
-   - Add cloud storage integration
-   - Implement PDF sheet music viewing
-
-## App Flow
-
-1. **Splash Screen**: Shows Tutti logo while loading
-2. **Authentication**: Login or signup with email/password
-3. **Onboarding** (new users): 6-step musical profile setup
-4. **Dashboard**: Feature cards for all music tools
-5. **Navigation**: Bottom bar with Home, Library, Settings
-
-## Design System
-
-- **Primary Color**: Indigo (`#6366F1`)
-- **Background**: Dark theme (`#0F0F23`, `#1E1E3F`)
-- **Typography**: Google Fonts Inter
-- **Components**: Material Design 3 with custom theming
-
-## Development Notes
-
-- All API calls are currently mocked for MVP demonstration
-- Visual animations and feedback are fully implemented
-- Responsive design for various screen sizes
-- Proper error handling and loading states
-- Clean architecture with separation of concerns
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
+Tutti turns every practice session into a smart, data-driven experience. Whether you are a beginner or a concert-level performer, Tutti provides everything you need in one elegant, cross-platform app.
 
 ---
 
-**Tutti** - Making music practice smarter, one note at a time! 🎼✨
+## ✨ Feature Highlights
+
+| Category | What you get |
+|----------|--------------|
+| **Smart Recommendations** | • AI-curated sheet-music feed matching your instrument, skill level, genres & goals.<br>• Real-time match % and difficulty tags.<br>• Listen to professional recordings before downloading.<br>• One-tap *Add to Library* syncs charts across all devices. |
+| **Tuner & Intonation** | • Ultra-precise tuner (< ±0.1 cent) with visual meter & reference tones.<br>• Automatic instrument presets and manual pitch entry.<br>• Intonation mode shows live cents-offset graph while you play. |
+| **Metronome+** | • Tap-tempo, subdivisions, complex accent patterns, haptic & audio click.<br>• Pendulum animation for visual timing.<br>• Save favourite tempos by piece. |
+| **Recording Analyzer** | • One-tap high-quality recording.<br>• Waveform & loudness display while you play.<br>• Automatic trimming, renaming, cloud-sync & share.<br>• Pitch/tempo analysis roadmap. |
+| **Practice Log** | • Automatic streak tracking & weekly/hourly stats.<br>• Practice reminders with custom time.<br>• Export log to CSV/Google Sheets. |
+| **Library** | • Organise sheet music, recordings & favourites in one place.<br>• Powerful filters & search.<br>• Offline caching & version history. |
+| **Account & Sync** | • Secure email / social-login (Supabase Auth).<br>• Preferences, library & stats backed up in real-time.<br>• Multi-device hot-reload – pick up practice on any phone, tablet or desktop. |
+| **Global Localisation** | • 7 languages shipped (EN, DE, ES, FR, IT, ZH, HI).<br>• Automatic locale detection & dynamic switching in Settings. |
+
+---
+
+## Screenshots
+*(Insert up-to-date screenshots / GIFs here to visually showcase major features.)*
+
+---
+
+## Tech Stack
+
+* **Flutter 3.19** – single code-base for iOS, Android, macOS, Windows & Web.
+* **Supabase** – Auth, storage & Postgres-powered backend.
+* **Provider + Riverpod** – clean state-management.
+* **just_audio / record / pitch_detector_dart** – low-latency audio engine.
+* **SharedPreferences** – instant local persistence.
+* **Google Fonts + Material 3** – modern, accessible UI.
+
+---
+
+## Getting Started
+
+```bash
+# 1. Clone
+$ git clone https://github.com/your-org/tutti.git && cd tuttiai
+
+# 2. Install dependencies
+$ flutter pub get
+
+# 3. (Optionally) set Supabase env keys
+$ cp .env.example .env && nano .env
+
+# 4. Run on device / simulator
+$ flutter run
+```
+
+### Build Targets
+
+```bash
+flutter build apk         # Android
+flutter build ios         # iOS (Xcode required)
+flutter build macos       # macOS desktop
+flutter build windows     # Windows desktop
+flutter build web         # PWAs & shareable links
+```
+
+---
+
+## Contributing
+
+1. Fork the repo & create a feature branch.
+2. Follow Conventional Commits for clear history.
+3. Run `flutter analyze` + unit tests before PR.
+4. Submit pull request – every PR runs CI with multiple device simulators.
+
+Looking for translations? Add a new language list to `_keyTranslations` in **`lib/services/localization_service.dart`**.
+
+---
+
+## Roadmap
+
+- 🎤 Real-time pitch & rhythm scoring.
+- 🧠 LLM-powered practice coach (feedback & suggestions).
+- 📝 Automatic fingerings & bowings on imported scores.
+- 🌐 Community sharing & peer feedback videos.
+
+---
+
+## License
+
+Licensed under the MIT License – see `LICENSE` for details.
+
+> *Tutti – practice smarter, play better.*

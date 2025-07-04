@@ -6,6 +6,9 @@ import 'package:pitch_detector_dart/pitch_detector.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
+import 'package:provider/provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../services/localization_service.dart';
 
 class TuningScreen extends StatefulWidget {
   const TuningScreen({super.key});
@@ -33,6 +36,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
   bool _isPlayingReference = false;
   double _currentPitch = 0.0;
   double _targetPitch = 0.0;
+  String _detectedNote = '';
   String _selectedInstrument = 'Violin';
   String _selectedNote = '';
   String _selectedString = '';
@@ -139,6 +143,36 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
   /// Get the display note name with octave
   String _getDisplayNote(String note, int octave) {
     return '$note$octave';
+  }
+
+  /// Find the closest note to a given frequency
+  String _findClosestNote(double frequency) {
+    if (frequency <= 0) return '';
+    
+    // Calculate semitones from A4 (440 Hz)
+    final semitones = 12 * (math.log(frequency / 440) / math.log(2));
+    final roundedSemitones = semitones.round();
+    
+    // A4 is at index 0, so we need to map to note names correctly
+    // Note sequence starting from A: A, A#, B, C, C#, D, D#, E, F, F#, G, G#
+    const noteNames = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+    
+    // Calculate note index (0-11) and octave
+    int noteIndex = roundedSemitones % 12;
+    if (noteIndex < 0) noteIndex += 12; // Handle negative modulo
+    
+    // Calculate octave - A4 is octave 4, so we adjust from there
+    int octave = 4 + (roundedSemitones / 12).floor();
+    
+    // Special handling for notes B and higher that cross octave boundary
+    // When we go from A4 to B4, we're still in octave 4
+    // When we go from B4 to C5, we enter octave 5
+    if (noteIndex >= 2) { // C and above
+      octave += 1;
+    }
+    
+    final noteName = noteNames[noteIndex];
+    return '$noteName$octave';
   }
 
   @override
@@ -278,6 +312,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
           _isListening = false;
           _currentPitch = 0.0;
           _cents = 0.0;
+          _detectedNote = '';
         });
       }
       
@@ -321,6 +356,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
             setState(() {
               _currentPitch = result.pitch;
               _cents = _calculateCents(_currentPitch, _targetPitch);
+              _detectedNote = _findClosestNote(_currentPitch);
             });
           }
         }
@@ -446,23 +482,17 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
     }
   }
 
-  String _getTuningText() {
-    if (_currentPitch == 0) return 'Start Tuning';
-    
-    // Always show cents value to prevent UI jumping
-    return '${_cents > 0 ? '+' : ''}${_cents.toStringAsFixed(0)} cents';
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Tuner',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Builder(builder: (context) {
+          final settings = Provider.of<SettingsProvider>(context);
+          return Text(
+            LocalizationService.translate('tuner', settings.language),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          );
+        }),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -479,13 +509,13 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Select Instrument',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Builder(builder: (context){
+                      final lang = Provider.of<SettingsProvider>(context).language;
+                      return Text(
+                        LocalizationService.translate('select_instrument', lang),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      );
+                    }),
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -496,13 +526,13 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                       child: DropdownButton<String>(
                         value: _selectedInstrument,
                         isExpanded: true,
-                        dropdownColor: const Color(0xFF1E1E3F),
-                        style: const TextStyle(),
+                        dropdownColor: Theme.of(context).cardColor,
+                        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                         underline: const SizedBox(),
                         items: _instruments.keys.map((instrument) {
                           return DropdownMenuItem(
                             value: instrument,
-                            child: Text(instrument),
+                            child: Builder(builder:(context){final lang=Provider.of<SettingsProvider>(context).language;return Text(LocalizationService.translate('instrument_${instrument.toLowerCase().replaceAll(' ', '_')}', lang));}),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -534,8 +564,8 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                   children: [
                     Text(
                       _instruments[_selectedInstrument]!.any((n) => n['string'].length > 1) 
-                          ? 'Select Note' 
-                          : 'Select String',
+                          ? LocalizationService.translate('select_string', Provider.of<SettingsProvider>(context, listen: false).language) 
+                          : LocalizationService.translate('select_string', Provider.of<SettingsProvider>(context, listen: false).language),
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -556,7 +586,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                         return Material(
                           color: isSelected 
                               ? const Color(0xFF6366F1) 
-                              : Colors.white.withValues(alpha: 0.1),
+                              : Theme.of(context).colorScheme.onSurface.withAlpha(26),
                           borderRadius: BorderRadius.circular(12),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
@@ -573,7 +603,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                 borderRadius: BorderRadius.circular(12),
                                 border: isSelected 
                                     ? null 
-                                    : Border.all(color: Colors.white30),
+                                    : Border.all(color: Theme.of(context).colorScheme.onSurface.withAlpha(77)),
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -581,7 +611,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                   Text(
                                     noteData['string'],
                                     style: TextStyle(
-                                      color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                                      color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(179),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 18,
                                     ),
@@ -590,7 +620,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                   Text(
                                     _getDisplayNote(noteData['note'], noteData['defaultOctave']),
                                     style: TextStyle(
-                                      color: isSelected ? Colors.white70 : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.54),
+                                      color: isSelected ? Colors.white70 : Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(138),
                                       fontSize: 12,
                                     ),
                                   ),
@@ -607,12 +637,17 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                     // Octave Selection
                     Row(
                       children: [
-                        const Text(
-                          'Octave:',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        Builder(
+                          builder: (context) {
+                            final lang = Provider.of<SettingsProvider>(context).language;
+                            return Text(
+                              '${LocalizationService.translate('octave', lang)}:',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -621,9 +656,9 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                               // Decrease octave button
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.1),
+                                  color: Theme.of(context).colorScheme.onSurface.withAlpha(26),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.white30),
+                                  border: Border.all(color: Theme.of(context).colorScheme.onSurface.withAlpha(77)),
                                 ),
                                 child: IconButton(
                                   onPressed: _selectedOctave > 0 ? () {
@@ -661,9 +696,9 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                               // Increase octave button
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.1),
+                                  color: Theme.of(context).colorScheme.onSurface.withAlpha(26),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.white30),
+                                  border: Border.all(color: Theme.of(context).colorScheme.onSurface.withAlpha(77)),
                                 ),
                                 child: IconButton(
                                   onPressed: _selectedOctave < 8 ? () {
@@ -699,46 +734,13 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                       width: 200,
                       height: 200,
                       child: CustomPaint(
-                        painter: TuningMeterPainter(
-                          cents: _cents,
-                          isActive: _isListening,
-                          color: _getTuningColor(),
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              AnimatedBuilder(
-                                animation: _pulseController,
-                                builder: (context, child) {
-                                  return Transform.scale(
-                                    scale: _isListening ? 1.0 + _pulseController.value * 0.1 : 1.0,
-                                    child: Icon(
-                                      _isListening ? Icons.graphic_eq : Icons.mic_off,
-                                      size: 48,
-                                      color: _isListening ? _getTuningColor() : Theme.of(context).iconTheme.color?.withOpacity(0.3),
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _currentPitch > 0 ? '${_currentPitch.toStringAsFixed(1)} Hz' : '-- Hz',
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                _getTuningText(),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: _getTuningColor(),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
+                        size: Size.infinite,
+                        painter: TunerPainter(
+                          tuningOffset: _cents,
+                          noteName: _getDisplayNote(_selectedNote, _selectedOctave),
+                          isListening: _isListening,
+                          color: _isListening ? _getTuningColor() : (Theme.of(context).iconTheme.color ?? Colors.grey).withAlpha(77),
+                          detectedNote: _detectedNote,
                         ),
                       ),
                     ),
@@ -760,10 +762,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                     color: Colors.white,
                                     size: 20,
                                   ),
-                                  label: Text(
-                                    _isPlayingReference ? 'Stop' : 'Reference',
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
+                                  label: Builder(builder:(context){final lang=Provider.of<SettingsProvider>(context).language;return Text(_isPlayingReference? LocalizationService.translate('stop',lang): LocalizationService.translate('reference',lang),style: const TextStyle(color: Colors.white));}),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF6366F1),
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -780,10 +779,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                     color: Colors.white,
                                     size: 20,
                                   ),
-                                  label: Text(
-                                    _isListening ? 'Stop' : 'Start',
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
+                                  label: Builder(builder:(context){final lang=Provider.of<SettingsProvider>(context).language;return Text(_isListening? LocalizationService.translate('stop',lang): LocalizationService.translate('start',lang),style: const TextStyle(color: Colors.white));}),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: _isListening 
                                         ? const Color(0xFFEF4444) 
@@ -809,10 +805,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                 ),
                                 label: FittedBox(
                                   fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    _isPlayingReference ? 'Stop' : 'Reference',
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
+                                  child: Builder(builder:(context){final l=Provider.of<SettingsProvider>(context).language;return Text(_isPlayingReference? LocalizationService.translate('stop',l): LocalizationService.translate('reference',l),style: const TextStyle(color: Colors.white));}),
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF6366F1),
@@ -831,10 +824,7 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                                 ),
                                 label: FittedBox(
                                   fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    _isListening ? 'Stop' : 'Start',
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
+                                  child: Builder(builder:(context){final l=Provider.of<SettingsProvider>(context).language;return Text(_isListening? LocalizationService.translate('stop',l): LocalizationService.translate('start',l),style: const TextStyle(color: Colors.white));}),
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: _isListening 
@@ -864,13 +854,13 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Target Note',
+                        Builder(builder: (context){final lang=Provider.of<SettingsProvider>(context).language;return Text(
+                          LocalizationService.translate('target_note', lang),
                           style: TextStyle(
-                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.54),
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(138),
                             fontSize: 14,
                           ),
-                        ),
+                        );}),
                         Text(
                           _getDisplayNote(_selectedNote, _selectedOctave),
                           style: const TextStyle(
@@ -883,13 +873,13 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          'Target Frequency',
+                        Builder(builder: (context){final lang=Provider.of<SettingsProvider>(context).language;return Text(
+                          LocalizationService.translate('target_frequency', lang),
                           style: TextStyle(
-                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.54),
+                            color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(138),
                             fontSize: 14,
                           ),
-                        ),
+                        );}),
                         Text(
                           '${_targetPitch.toStringAsFixed(2)} Hz',
                           style: const TextStyle(
@@ -911,59 +901,36 @@ class _TuningScreenState extends State<TuningScreen> with TickerProviderStateMix
 }
 
 // Custom painter for the tuning meter
-class TuningMeterPainter extends CustomPainter {
-  final double cents;
-  final bool isActive;
+class TunerPainter extends CustomPainter {
+  final double tuningOffset;
+  final String noteName;
+  final bool isListening;
   final Color color;
+  final String detectedNote;
 
-  TuningMeterPainter({
-    required this.cents,
-    required this.isActive,
+  TunerPainter({
+    required this.tuningOffset,
+    required this.noteName,
+    required this.isListening,
     required this.color,
+    required this.detectedNote,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 20;
+    final radius = math.min(size.width, size.height) / 2 - 20;
     
-    // Draw arc background
-    final backgroundPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.1)
-      ..strokeWidth = 8
+    // Draw circular path
+    final pathPaint = Paint()
+      ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      math.pi * 0.75,
-      math.pi * 1.5,
-      false,
-      backgroundPaint,
-    );
-    
-    // Draw tuning marks
-    final markPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.3)
       ..strokeWidth = 2;
-    
-    for (int i = -50; i <= 50; i += 10) {
-      final angle = math.pi * 0.75 + (math.pi * 1.5 * ((i + 50) / 100));
-      final startX = center.dx + (radius - 5) * math.cos(angle);
-      final startY = center.dy + (radius - 5) * math.sin(angle);
-      final endX = center.dx + (radius + 5) * math.cos(angle);
-      final endY = center.dy + (radius + 5) * math.sin(angle);
-      
-      canvas.drawLine(
-        Offset(startX, startY),
-        Offset(endX, endY),
-        markPaint,
-      );
-    }
+    canvas.drawCircle(center, radius, pathPaint);
     
     // Draw center mark
     final centerMarkPaint = Paint()
-      ..color = color.withOpacity(0.7)
+      ..color = color.withValues(alpha: 0.7)
       ..strokeWidth = 3;
     
     final centerAngle = math.pi * 1.5;
@@ -978,35 +945,113 @@ class TuningMeterPainter extends CustomPainter {
       centerMarkPaint,
     );
     
-    if (isActive) {
-      // Draw indicator
-      final normalizedCents = cents.clamp(-50.0, 50.0);
-      final indicatorAngle = math.pi * 0.75 + (math.pi * 1.5 * ((normalizedCents + 50) / 100));
+    if (isListening) {
+      // Draw curved paddle indicator
+      final normalizedOffset = tuningOffset.clamp(-50.0, 50.0);
+      final indicatorAngle = math.pi * 0.75 + (math.pi * 1.5 * ((normalizedOffset + 50) / 100));
       
-      final indicatorPaint = Paint()
+      // Draw curved paddle
+      final paddlePaint = Paint()
         ..color = color
-        ..strokeWidth = 4
-        ..strokeCap = StrokeCap.round;
+        ..style = PaintingStyle.fill;
       
-      final indicatorEndX = center.dx + radius * 0.7 * math.cos(indicatorAngle);
-      final indicatorEndY = center.dy + radius * 0.7 * math.sin(indicatorAngle);
+      final paddleRadius = 12.0;
+      final paddleDistance = radius - 5;
       
-      canvas.drawLine(center, Offset(indicatorEndX, indicatorEndY), indicatorPaint);
+      // Create curved paddle path
+      final paddlePath = Path();
       
-      // Draw indicator circle
+      // Calculate paddle arc points
+      final paddleStartAngle = indicatorAngle - 0.2;
+      final paddleEndAngle = indicatorAngle + 0.2;
+      
+      // Outer arc
+      final outerRadius = paddleDistance + paddleRadius;
+      
+      // Inner arc  
+      final innerRadius = paddleDistance - paddleRadius;
+      
+      // Build paddle as an arc segment
+      paddlePath.addArc(
+        Rect.fromCircle(center: center, radius: outerRadius),
+        paddleStartAngle,
+        paddleEndAngle - paddleStartAngle,
+      );
+      
+      paddlePath.arcTo(
+        Rect.fromCircle(center: center, radius: innerRadius),
+        paddleEndAngle,
+        -(paddleEndAngle - paddleStartAngle),
+        false,
+      );
+      
+      paddlePath.close();
+      
+      // Draw the paddle
+      canvas.drawPath(paddlePath, paddlePaint);
+      
+      // Add a small highlight circle on the paddle
+      final paddleCenterX = center.dx + paddleDistance * math.cos(indicatorAngle);
+      final paddleCenterY = center.dy + paddleDistance * math.sin(indicatorAngle);
+      
+      final highlightPaint = Paint()
+        ..color = color.withAlpha(180)
+        ..style = PaintingStyle.fill;
+      
       canvas.drawCircle(
-        Offset(indicatorEndX, indicatorEndY),
+        Offset(paddleCenterX, paddleCenterY),
         6,
-        Paint()..color = color,
+        highlightPaint,
+      );
+      
+      // Draw detected note
+      final textPainter = TextPainter(
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+      );
+      
+      textPainter.text = TextSpan(
+        text: detectedNote,
+        style: TextStyle(
+          color: color,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(center.dx - textPainter.width / 2, center.dy - textPainter.height - 8),
+      );
+      
+      // Draw cents below note
+      final centsText = tuningOffset > 0 
+          ? '+${tuningOffset.toStringAsFixed(0)}¢'
+          : '${tuningOffset.toStringAsFixed(0)}¢';
+      
+      textPainter.text = TextSpan(
+        text: centsText,
+        style: TextStyle(
+          color: color,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(center.dx - textPainter.width / 2, center.dy + 8),
       );
     }
   }
 
   @override
-  bool shouldRepaint(covariant TuningMeterPainter oldDelegate) {
-    return cents != oldDelegate.cents ||
-        isActive != oldDelegate.isActive ||
-        color != oldDelegate.color;
+  bool shouldRepaint(covariant TunerPainter oldDelegate) {
+    return tuningOffset != oldDelegate.tuningOffset ||
+        noteName != oldDelegate.noteName ||
+        isListening != oldDelegate.isListening ||
+        color != oldDelegate.color ||
+        detectedNote != oldDelegate.detectedNote;
   }
 }
 

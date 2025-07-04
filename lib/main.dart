@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'providers/auth_provider.dart';
@@ -7,6 +8,7 @@ import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/main/main_layout.dart';
 import 'services/supabase_service.dart';
+import 'services/localization_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,8 +57,6 @@ class TuttiApp extends StatelessWidget {
         brightness: Brightness.light,
         primary: primaryColor,
         secondary: secondaryColor,
-        background: const Color(0xFFF9FAFB),
-        onBackground: Colors.black,
         surface: Colors.white,
         onSurface: Colors.black,
       ),
@@ -91,8 +91,6 @@ class TuttiApp extends StatelessWidget {
         brightness: Brightness.dark,
         primary: primaryColor,
         secondary: secondaryColor,
-        background: const Color(0xFF0F0F23),
-        onBackground: Colors.white,
         surface: const Color(0xFF1E1E3F),
         onSurface: Colors.white,
       ),
@@ -113,6 +111,21 @@ class TuttiApp extends StatelessWidget {
             theme: lightTheme,
             darkTheme: darkTheme,
             themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            locale: LocalizationService.getLocale(settings.language),
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en', 'US'), // English
+              Locale('de', 'DE'), // German
+              Locale('es', 'ES'), // Spanish
+              Locale('fr', 'FR'), // French
+              Locale('it', 'IT'), // Italian
+              Locale('zh', 'CN'), // Chinese
+              Locale('hi', 'IN'), // Hindi
+            ],
             home: const AppWrapper(),
           );
         },
